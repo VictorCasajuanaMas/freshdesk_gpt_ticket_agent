@@ -6,4 +6,6 @@ clonar repositorio
 
 ejecutar fdk run
 
+Entrar en http://localhost:10001/custom_configs y añadir el ApiKey de Open AI y un prompt base que se pasará a todas las consultas ( revisar miprompt.md )
+
 abrir un ticket en freshdesk y en la url añadir ?dev=true ( ejemplo: https://visionwin.freshdesk.com/a/tickets/43073?dev=true )

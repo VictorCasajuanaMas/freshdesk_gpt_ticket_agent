@@ -4,7 +4,6 @@
     "description": "Tu API key de OpenAI para ChatGPT",
     "type": "text",
     "required": true,
-    "secure": true,
     "default_value": ""
   }
 }

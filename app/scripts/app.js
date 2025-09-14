@@ -25,13 +25,13 @@ function initializeApp() {
   LogWrite('Iniciando aplicación GPT Ticket Assistant');
   
   window.frsh_init().then(function(client_instance) {
-    // Asignar al estado y variables globales PRIMERO
+    // Inicializar sistema de debug
+    initDebug();
+    
+    // Asignar al estado y variables globales
     appState.client = client_instance;
     client = client_instance;
     window.client = client_instance;
-    
-    // DESPUÉS inicializar sistema de debug
-    initDebug();
     
     LogWrite('Cliente inicializado correctamente');
     

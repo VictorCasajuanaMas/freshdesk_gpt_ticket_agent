@@ -1,0 +1,10 @@
+{
+  "openai_api_key": {
+    "display_name": "OpenAI API Key",
+    "description": "Tu API key de OpenAI para ChatGPT",
+    "type": "text",
+    "required": true,
+    "secure": true,
+    "default_value": ""
+  }
+}

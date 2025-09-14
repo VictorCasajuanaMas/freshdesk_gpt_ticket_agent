@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Otra Respuesta</title>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/css/crayons-min.css" />
+  <script type="module" src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.esm.js"></script>
+  <script nomodule src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.js"></script>
+  <script src="{{{appclient}}}"></script>
+</head>
+<body>
+  <script>
+    let client;
+    
+    const init = async () => {
+      client = await window.frsh_init();
+      document.querySelector('form').addEventListener('submit', handleSubmit);
+    };
+
+    const handleSubmit = async (event) => {
+      event.preventDefault();
+      
+      const textoInput = document.getElementById('textoAdicional');
+      const textoValue = textoInput.value; // fw-textarea tiene la propiedad value
+      
+      await client.instance.send({
+        message: {
+          textoAdicional: textoValue
+        }
+      });
+      
+      client.instance.close();
+    };
+    
+    init();
+  </script>
+  
+  <div style="padding: 16px;">
+    <h3 class="fw-type-h3">Nueva Consulta</h3>
+    <p class="fw-type-base">Añade información adicional para generar otra respuesta:</p>
+    <form>
+      <fw-textarea 
+        id="textoAdicional" 
+        rows="4" 
+        cols="50" 
+        placeholder="Escribe información adicional aquí..."
+        label="Información adicional">
+      </fw-textarea>
+      <br><br>
+      <fw-button type="submit" color="primary">Aceptar</fw-button>
+      <fw-button type="button" color="secondary" onclick="client.instance.close()">Cancelar</fw-button>
+    </form>
+  </div>
+</body>
+</html>

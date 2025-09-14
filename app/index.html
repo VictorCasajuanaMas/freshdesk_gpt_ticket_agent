@@ -1,0 +1,21 @@
+<html>
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/css/crayons-min.css" />
+  <script async type="module" src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.esm.js"></script>
+  <script async nomodule src="https://cdn.jsdelivr.net/npm/@freshworks/crayons@v4/dist/crayons/crayons.js"></script>
+  <script async src="https://static.freshdev.io/fdk/2.0/assets/fresh_client.js"></script>
+  <script src="{{{appclient}}}"></script>
+  
+  <!-- Scripts del proyecto en orden de dependencias -->
+  <script src="scripts/prompt.js"></script>
+  <script src="scripts/chatgpt-service.js"></script>
+  <script src="scripts/ui-renderer.js"></script>
+  <script src="scripts/ticket-handler.js"></script>
+  <script src="scripts/modal-handler.js"></script>
+  <script src="scripts/app.js"></script>
+  
+  <body>
+    <div class="container">
+      <div id="apptext" class="fw-type-base"></div>
+    </div>
+  </body>
+</html>

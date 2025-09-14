@@ -22,22 +22,31 @@ let client = null;
  * Configura eventos y listeners principales
  */
 function initializeApp() {
+  LogWrite('Iniciando aplicación GPT Ticket Assistant');
+  
   window.frsh_init().then(function(client_instance) {
-    // Asignar al estado y variables globales
+    // Asignar al estado y variables globales PRIMERO
     appState.client = client_instance;
     client = client_instance;
     window.client = client_instance;
+    
+    // DESPUÉS inicializar sistema de debug
+    initDebug();
+    
+    LogWrite('Cliente inicializado correctamente');
     
     // Escuchar mensajes del modal
     client_instance.instance.receive(function(event) {
       const data = event.helper.getData();
       const textoAdicional = data.message.textoAdicional;
+      LogWrite('Recibido texto adicional del modal');
       handleTextoAdicional(textoAdicional);
     });
 
     // Evento principal cuando se activa la app
     client_instance.events.on('app.activated', renderText);
   }).catch(function(error) {
+    LogWrite('Error al inicializar aplicación: ' + error.message);
     console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
@@ -55,6 +64,7 @@ initializeApp();
  */
 async function renderText() {
   const textElement = document.getElementById('apptext');
+  LogWrite('Iniciando renderText - obteniendo datos del ticket');
   
   try {
     // Verificar que el cliente esté disponible
@@ -67,11 +77,15 @@ async function renderText() {
     const ticketInfo = ticketData.ticket;
     const { subject, description } = ticketInfo;
 
+    LogWrite('Datos del ticket obtenidos - iniciando consulta a ChatGPT');
+
     // Mostrar spinner de loading
     textElement.innerHTML = renderLoadingSpinner('Consultando al asistente...');
     
     // Generar respuesta de ChatGPT
     const chatGPTResponse = await callChatGPT(subject, description);
+    
+    LogWrite('Respuesta de ChatGPT recibida - renderizando UI');
     
     // Asignar a estado y variables globales de forma segura
     appState.currentTicketData = ticketInfo;
@@ -84,6 +98,7 @@ async function renderText() {
     // Renderizar UI
     textElement.innerHTML = renderUI(formattedResponse);
   } catch (error) {
+    LogWrite('Error en renderText: ' + error.message);
     console.error('Error en renderText:', error);
     textElement.innerHTML = renderError(error.message);
   }

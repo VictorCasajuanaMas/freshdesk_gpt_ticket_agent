@@ -21,8 +21,11 @@ function extractResponseText(response) {
  * Abre el editor de respuesta de Freshdesk con el texto insertado
  */
 async function addResponseToTicket() {
+  LogWrite('Iniciando inserción de respuesta en ticket');
+  
   try {
     if (!lastChatGPTResponse) {
+      LogWrite('Error: No hay respuesta de ChatGPT disponible');
       console.error('No hay respuesta de ChatGPT para añadir');
       return;
     }
@@ -33,11 +36,13 @@ async function addResponseToTicket() {
       id: "reply",
       text: responseText
     }).then(function() {
+      LogWrite('Respuesta insertada exitosamente en ticket');
       client.interface.trigger("showNotify", {
         type: "success",
         message: "Respuesta insertada en el editor"
       });
     }).catch(function() {
+      LogWrite('Error al insertar respuesta en ticket');
       client.interface.trigger("showNotify", {
         type: "danger",
         title: "Error",
@@ -46,6 +51,7 @@ async function addResponseToTicket() {
     });
 
   } catch (error) {
+    LogWrite('Error al insertar respuesta: ' + error.message);
     console.error('Error al abrir editor de respuesta:', error);
     client.interface.trigger("showNotify", {
       type: "danger",

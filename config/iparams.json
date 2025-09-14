@@ -12,5 +12,12 @@
     "type": "paragraph",
     "required": true,
     "default_value": "Eres un asistente especializado en atención al cliente. Analiza el siguiente ticket de soporte y genera una respuesta profesional, empática y útil. Responde en formato JSON con esta estructura: {\"estado\": {\"emoji\": \"😊\", \"estado\": \"Descripción del estado\"}, \"respuesta\": \"Tu respuesta detallada aquí\"}"
+  },
+  "debug_enabled": {
+    "display_name": "Habilitar Debug",
+    "description": "Activar logs de debug en consola para diagnóstico",
+    "type": "checkbox",
+    "required": false,
+    "default_value": false
   }
 }

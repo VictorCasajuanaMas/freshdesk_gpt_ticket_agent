@@ -7,12 +7,7 @@
  * Abre el modal que permite al usuario añadir más contexto
  */
 function showOtraModal() {
-  if (!client) {
-    console.error('Cliente no disponible');
-    return;
-  }
-  
-  client.interface.trigger('showModal', {
+  appState.client.interface.trigger('showModal', {
     title: 'Otra Respuesta',
     template: './modal.html'
   });
@@ -26,7 +21,7 @@ function showOtraModal() {
 async function handleTextoAdicional(textoAdicional) {
   LogWrite('Procesando texto adicional del modal para nueva respuesta');
   
-  if (!currentTicketData || !textoAdicional.trim()) {
+  if (!appState.currentTicketData || !textoAdicional.trim()) {
     LogWrite('Error: No hay datos del ticket o texto adicional vacío');
     console.warn('No hay datos del ticket o texto adicional vacío');
     return;
@@ -37,19 +32,19 @@ async function handleTextoAdicional(textoAdicional) {
   try {
     textElement.innerHTML = renderLoadingSpinner('Generando nueva respuesta...');
     
-    const { subject, description } = currentTicketData;
+    const { subject, description } = appState.currentTicketData;
     const response = await callChatGPT(subject, description, textoAdicional);
     
     LogWrite('Nueva respuesta con información adicional generada');
     
-    // Asignar de forma segura
-    lastChatGPTResponse = response;
+    // Actualizar estado global
+    appState.lastChatGPTResponse = response;
     const formattedResponse = formatResponse(response);
     
     textElement.innerHTML = renderUI(formattedResponse);
   } catch (error) {
     LogWrite('Error al generar respuesta adicional: ' + error.message);
     console.error('Error en handleTextoAdicional:', error);
-    textElement.innerHTML = renderError(error.message);
+    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${error.message}</p>`;
   }
 }

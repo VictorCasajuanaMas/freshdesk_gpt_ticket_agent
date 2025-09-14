@@ -10,11 +10,6 @@ const appState = {
   lastChatGPTResponse: null
 };
 
-// Variables globales para compatibilidad con otros módulos
-let currentTicketData = null;
-let lastChatGPTResponse = null;
-let client = null;
-
 
 
 /**
@@ -28,9 +23,8 @@ function initializeApp() {
     // Inicializar sistema de debug
     initDebug();
     
-    // Asignar al estado y variables globales
+    // Asignar al estado global
     appState.client = client_instance;
-    client = client_instance;
     window.client = client_instance;
     
     LogWrite('Cliente inicializado correctamente');
@@ -50,7 +44,7 @@ function initializeApp() {
     console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
-      textElement.innerHTML = renderError('Error al inicializar la aplicación: ' + error.message);
+      textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> Error al inicializar la aplicación: ${error.message}</p>`;
     }
   });
 }
@@ -67,11 +61,6 @@ async function renderText() {
   LogWrite('Iniciando renderText - obteniendo datos del ticket');
   
   try {
-    // Verificar que el cliente esté disponible
-    if (!appState.client) {
-      throw new Error('Cliente no inicializado');
-    }
-
     // Obtener datos del ticket actual
     const ticketData = await appState.client.data.get('ticket');
     const ticketInfo = ticketData.ticket;
@@ -87,11 +76,9 @@ async function renderText() {
     
     LogWrite('Respuesta de ChatGPT recibida - renderizando UI');
     
-    // Asignar a estado y variables globales de forma segura
+    // Asignar al estado global
     appState.currentTicketData = ticketInfo;
     appState.lastChatGPTResponse = chatGPTResponse;
-    currentTicketData = ticketInfo;
-    lastChatGPTResponse = chatGPTResponse;
     
     const formattedResponse = formatResponse(chatGPTResponse);
     
@@ -100,6 +87,6 @@ async function renderText() {
   } catch (error) {
     LogWrite('Error en renderText: ' + error.message);
     console.error('Error en renderText:', error);
-    textElement.innerHTML = renderError(error.message);
+    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${error.message}</p>`;
   }
 }

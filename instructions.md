@@ -7,6 +7,7 @@ Puedes vedr toda la documentación de la librería UI en el siguiente enlace: http
 Aquí tienes la documentación del API: https://developers.freshdesk.com/api/#introduction
 Subir aplicación a producción: https://developers.freshworks.com/docs/app-sdk/v3.0/common/app-development-process/#test-the-app
 manifest.json documentacion: https://developers.freshworks.com/docs/app-sdk/v3.0/common/front-end-apps/app-manifest/
+Es muy importante no escribir código de más que no se ejecutará nunca con comprobaciones redundantes de casos que no pùeden suceder, ya que para poder publicar se necesita un 80% de cobertura de probar el código y si hay muchos try-catch los catch no se prueban y bajan la cobertura.
 
 Objetivo:
 El objetivo principal de la aplicación es leer el contenido del ticket y el asunto.

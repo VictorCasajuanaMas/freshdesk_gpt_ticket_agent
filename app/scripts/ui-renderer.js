@@ -8,15 +8,11 @@
  * @returns {string} - HTML formateado para mostrar
  */
 function formatResponse(response) {
-  try {
-    const parsedResponse = JSON.parse(response);
-    return `
-      <p>${parsedResponse.estado.emoji} ${parsedResponse.estado.estado}</p>
-      <div>${parsedResponse.respuesta.replace(/\n/g, '<br>')}</div>
-    `;
-  } catch {
-    return `<div>${response.replace(/\n/g, '<br>')}</div>`;
-  }
+  const parsedResponse = JSON.parse(response);
+  return `
+    <p>${parsedResponse.estado.emoji} ${parsedResponse.estado.estado}</p>
+    <div>${parsedResponse.respuesta.replace(/\n/g, '<br>')}</div>
+  `;
 }
 
 /**
@@ -44,14 +40,5 @@ function renderLoadingSpinner(message) {
     <fw-spinner size="small"></fw-spinner>
     <span class="fw-type-base">${message}</span>
   </div>`;
-}
-
-/**
- * Renderizar mensaje de error
- * @param {string} errorMessage - Mensaje de error
- * @returns {string} - HTML del mensaje de error
- */
-function renderError(errorMessage) {
-  return `<p class="fw-type-base"><strong>Error:</strong> ${errorMessage}</p>`;
 }
 

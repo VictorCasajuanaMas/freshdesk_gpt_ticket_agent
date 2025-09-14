@@ -15,16 +15,20 @@ async function callChatGPT(subject, description, additionalInfo = null) {
     throw new Error('Cliente no inicializado');
   }
 
-  // Obtener la API key desde los parámetros de configuración
+  // Obtener la API key y el prompt desde los parámetros de configuración
   const iparams = await window.client.iparams.get();
   const openaiApiKey = iparams.openai_api_key;
+  const systemPrompt = iparams.system_prompt;
   
   if (!openaiApiKey) {
     throw new Error('API Key de OpenAI no configurada. Ve a http://localhost:10001/custom_configs para configurarla.');
   }
 
-  // Obtener el prompt del sistema
-  const systemPrompt = getSystemPrompt();
+  if (!systemPrompt) {
+    throw new Error('Prompt del sistema no configurado. Ve a http://localhost:10001/custom_configs para configurarlo.');
+  }
+
+  // Preparar el prompt final
   let finalPrompt = systemPrompt;
   
   if (additionalInfo) {

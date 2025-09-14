@@ -5,5 +5,12 @@
     "type": "text",
     "required": true,
     "default_value": ""
+  },
+  "system_prompt": {
+    "display_name": "Prompt del Sistema",
+    "description": "Prompt personalizado que define cómo debe comportarse ChatGPT al analizar tickets",
+    "type": "paragraph",
+    "required": true,
+    "default_value": "Eres un asistente especializado en atención al cliente. Analiza el siguiente ticket de soporte y genera una respuesta profesional, empática y útil. Responde en formato JSON con esta estructura: {\"estado\": {\"emoji\": \"😊\", \"estado\": \"Descripción del estado\"}, \"respuesta\": \"Tu respuesta detallada aquí\"}"
   }
 }

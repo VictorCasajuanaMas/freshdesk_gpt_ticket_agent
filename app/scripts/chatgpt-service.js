@@ -17,26 +17,12 @@ async function callChatGPT(subject, description, additionalInfo = null) {
     }
 
     // Obtener la API key desde los parámetros de configuración
-    let openaiApiKey = null;
-    
-    try {
-      const iparams = await window.client.iparams.get();
-      console.log('iparams obtenidos:', iparams);
-      openaiApiKey = iparams.openai_api_key;
-    } catch (iparamsError) {
-      console.error('Error obteniendo iparams:', iparamsError);
-    }
-    
-    // Temporal para desarrollo - añade tu API key aquí
-    if (!openaiApiKey) {
-      openaiApiKey = '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';
-    }
+    const iparams = await window.client.iparams.get();
+    const openaiApiKey = iparams.openai_api_key;
     
     if (!openaiApiKey) {
-      throw new Error('API Key de OpenAI no configurada. Por favor, configúrala en los parámetros de instalación.');
+      throw new Error('API Key de OpenAI no configurada. Ve a http://localhost:10001/custom_configs para configurarla.');
     }
-
-    console.log('Usando API key:', openaiApiKey.substring(0, 20) + '...');
 
     let systemPrompt = getSystemPrompt();
     

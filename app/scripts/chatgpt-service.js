@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Servicio para manejar las comunicaciones con la API de ChatGPT
  */
@@ -12,15 +13,9 @@
 async function callChatGPT(subject, description, additionalInfo = null) {
   LogWrite('Iniciando llamada a ChatGPT API');
   
-  // Obtener la API key y el prompt desde los parámetros de configuración
+  // Obtener el prompt desde los parámetros de configuración
   const iparams = await window.client.iparams.get();
-  const openaiApiKey = iparams.openai_api_key;
   const systemPrompt = iparams.system_prompt;
-  
-  if (!openaiApiKey) {
-    LogWrite('Error: API Key no configurada');
-    throw new Error('API Key de OpenAI no configurada. Ve a http://localhost:10001/custom_configs para configurarla.');
-  }
 
   LogWrite('Configuración validada - preparando petición a OpenAI');
 
@@ -41,31 +36,13 @@ async function callChatGPT(subject, description, additionalInfo = null) {
     temperature: 0.7
   };
 
-  try {
-    // Llamada a la API de OpenAI
-    LogWrite('Enviando petición a OpenAI API');
-    const response = await fetch('https://api.openai.com/v1/chat/completions', {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${openaiApiKey}`
-      },
-      body: JSON.stringify(requestBody)
-    });
+  // Llamada segura a la API de OpenAI usando request template
+  LogWrite('Enviando petición a OpenAI API via invokeTemplate');
+  const response = await window.client.request.invokeTemplate('openaiChatCompletion', {
+    body: JSON.stringify(requestBody)
+  });
 
-    if (!response.ok) {
-      const errorText = await response.text();
-      LogWrite('Error en respuesta de OpenAI: ' + response.status);
-      throw new Error(`Error ${response.status}: ${errorText}`);
-    }
-
-    const data = await response.json();
-    LogWrite('Respuesta de ChatGPT recibida exitosamente');
-    return data.choices[0].message.content;
-    
-  } catch (error) {
-    LogWrite('Error al conectar con ChatGPT: ' + error.message);
-    console.error('Error al llamar a OpenAI:', error);
-    throw new Error(`Error al conectar con ChatGPT: ${error.message}`);
-  }
+  const data = JSON.parse(response.response);
+  LogWrite('Respuesta de ChatGPT recibida exitosamente');
+  return data.choices[0].message.content;
 }

@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Funciones para el renderizado de la interfaz de usuario
  */

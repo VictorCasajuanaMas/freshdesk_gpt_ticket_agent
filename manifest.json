@@ -7,6 +7,9 @@
           "url": "index.html",
           "icon": "styles/images/icon.svg"
         }
+      },
+      "requests": {
+        "openaiChatCompletion": {}
       }
     },
     "support_ticket": {
@@ -19,7 +22,7 @@
     }
   },
   "engines": {
-    "node": "18.20.8",
-    "fdk": "9.7.4"
+    "node": "24.11.0",
+    "fdk": "10.0.1"
   }
 }

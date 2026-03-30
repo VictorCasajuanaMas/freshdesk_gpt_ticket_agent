@@ -1,0 +1,14 @@
+{
+  "openaiChatCompletion": {
+    "schema": {
+      "method": "POST",
+      "protocol": "https",
+      "host": "api.openai.com",
+      "path": "/v1/chat/completions",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer <%= encode(iparam.openai_api_key) %>"
+      }
+    }
+  }
+}

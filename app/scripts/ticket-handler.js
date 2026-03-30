@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Funciones para el manejo de tickets y respuestas
  */

@@ -7,7 +7,7 @@ Aplicación para la plataforma **Freshdesk** que se ejecuta dentro de la vista d
 ## Stack Tecnológico
 
 - **Plataforma:** Freshworks App SDK v3.0 (platform-version: "3.0")
-- **FDK:** v9.7.4 | **Node:** v18.20.8
+- **FDK:** v10.0.1 | **Node:** v24.11.0
 - **UI:** Freshworks Crayons v4 (web components: `fw-button`, `fw-spinner`, `fw-textarea`, etc.)
 - **API externa:** OpenAI Chat Completions API (`gpt-3.5-turbo`)
 - **Lenguaje:** JavaScript vanilla (sin frameworks, sin bundlers)
@@ -30,14 +30,16 @@ Aplicación para la plataforma **Freshdesk** que se ejecuta dentro de la vista d
 ## Arquitectura y Estructura de Ficheros
 
 ```
-manifest.json            → Configuración de la app: locations, módulos, engines
-config/iparams.json      → Parámetros de instalación (API key, prompt del sistema, debug)
+manifest.json            → Configuración de la app: locations, módulos, engines, requests
+config/iparams.json      → Parámetros de instalación (API key segura, prompt del sistema, debug)
+config/requests.json     → Request templates para llamadas seguras a APIs externas (OpenAI)
+fdk-run.bat              → Launcher para ejecutar fdk run con Node 24.11.0 configurado
 app/
   index.html             → Página principal cargada en ticket_sidebar y full_page_app
   modal.html             → Modal para solicitar información adicional al agente
   scripts/
     logger.js            → Sistema de logging condicional (controlado por iparam debug_enabled)
-    chatgpt-service.js   → Llamadas a la API de OpenAI (callChatGPT)
+    chatgpt-service.js   → Llamadas a la API de OpenAI via client.request.invokeTemplate
     ui-renderer.js       → Renderizado de HTML: formatResponse, renderUI, renderLoadingSpinner
     ticket-handler.js    → Manejo de tickets: extractResponseText, addResponseToTicket
     modal-handler.js     → Gestión del modal: showOtraModal, handleTextoAdicional
@@ -51,12 +53,11 @@ app/
 
 Los scripts se cargan en `index.html` en orden de dependencias:
 1. `logger.js` — sin dependencias
-2. `prompt.js` — (referenciado en HTML, pendiente de verificar existencia)
-3. `chatgpt-service.js` — depende de logger, client
-4. `ui-renderer.js` — sin dependencias externas
-5. `ticket-handler.js` — depende de appState, client
-6. `modal-handler.js` — depende de appState, chatgpt-service, ui-renderer
-7. `app.js` — orquesta todo, depende de todos los anteriores
+2. `chatgpt-service.js` — depende de logger, client
+3. `ui-renderer.js` — sin dependencias externas
+4. `ticket-handler.js` — depende de appState, client
+5. `modal-handler.js` — depende de appState, chatgpt-service, ui-renderer
+6. `app.js` — orquesta todo, depende de todos los anteriores
 
 ## Locations (manifest.json)
 
@@ -67,7 +68,7 @@ Los scripts se cargan en `index.html` en orden de dependencias:
 
 | Parámetro | Tipo | Requerido | Descripción |
 |---|---|---|---|
-| `openai_api_key` | text | Sí | API Key de OpenAI |
+| `openai_api_key` | text (secure) | Sí | API Key de OpenAI (marcada como secure, no visible en frontend) |
 | `system_prompt` | paragraph | Sí | Prompt de sistema para ChatGPT. Define el comportamiento del asistente. La respuesta esperada es JSON: `{"estado": {"emoji": "...", "estado": "..."}, "respuesta": "..."}` |
 | `debug_enabled` | checkbox | No | Activa logs de debug en consola |
 
@@ -76,7 +77,7 @@ Los scripts se cargan en `index.html` en orden de dependencias:
 1. **Inicialización:** `initializeApp()` llama a `window.frsh_init()` para obtener el `client` del SDK.
 2. **Activación:** Al evento `app.activated`, se ejecuta `renderText()`.
 3. **Obtención de datos:** `client.data.get('ticket')` obtiene `subject` y `description` del ticket actual.
-4. **Consulta a ChatGPT:** `callChatGPT(subject, description)` envía los datos a OpenAI con el `system_prompt` configurado.
+4. **Consulta a ChatGPT:** `callChatGPT(subject, description)` envía los datos a OpenAI mediante `client.request.invokeTemplate('openaiChatCompletion', ...)` con el `system_prompt` configurado.
 5. **Renderizado:** La respuesta (JSON) se parsea y se muestra con estado/emoji + texto de respuesta.
 6. **Acciones del agente:**
    - **"Añadir"**: `addResponseToTicket()` abre el editor de respuesta del ticket con `client.interface.trigger("click", {id: "reply", text: responseText})`.
@@ -94,11 +95,13 @@ const appState = {
 
 ## API de OpenAI — Formato de Llamada
 
+- **Request Template:** `openaiChatCompletion` (definido en `config/requests.json`, declarado en `manifest.json`)
+- **Método de invocación:** `client.request.invokeTemplate('openaiChatCompletion', { body: JSON.stringify(requestBody) })`
 - **Endpoint:** `https://api.openai.com/v1/chat/completions`
 - **Modelo:** `gpt-3.5-turbo`
 - **Temperature:** `0.7`
 - **Mensajes:** System prompt (configurable) + User message con asunto y cuerpo del ticket
-- **Autenticación:** Bearer token con la API key del iparam
+- **Autenticación:** Bearer token con la API key del iparam (secure, inyectada via template)
 
 ## Formato de Respuesta Esperado de ChatGPT
 
@@ -118,12 +121,18 @@ const appState = {
 2. **Usar solo componentes de Crayons** para la UI. No inventar estilos ni componentes custom.
 3. **Todos los ficheros en UTF-8.**
 4. **JavaScript vanilla** — sin frameworks, sin TypeScript, sin bundlers.
-5. **No usar `client.request.invokeTemplate()`** — las llamadas a OpenAI se hacen directamente con `fetch()` desde el frontend.
+5. **Usar `client.request.invokeTemplate()`** para llamadas a APIs externas (no `fetch()` directo). Esto protege las API keys y cumple las validaciones del FDK.
+6. **Lint:** Cada fichero de utilidad debe incluir `/* eslint-disable no-unused-vars */` al inicio, ya que el FDK (ESLint 9 flat config, `sourceType: module`) lintía cada fichero de forma independiente y no detecta funciones usadas cross-file.
+7. **No usar `var`** — la regla `no-var` es ERROR en el FDK. Usar siempre `let` o `const`.
 
 ## Comandos de Desarrollo
 
 ```bash
-# Iniciar servidor de desarrollo local
+# Iniciar servidor de desarrollo local (usa fdk-run.bat para configurar Node automáticamente)
+fdk-run.bat
+
+# O manualmente con Node 24.11.0:
+set PATH=%APPDATA%\nvm\v24.11.0;%PATH%
 fdk run
 
 # URL de la app en desarrollo (dentro de Freshdesk)
@@ -131,4 +140,7 @@ fdk run
 
 # Configurar parámetros de instalación en desarrollo
 # http://localhost:10001/custom_configs
+
+# System settings (módulos y dominio)
+# http://localhost:10001/system_settings
 ```

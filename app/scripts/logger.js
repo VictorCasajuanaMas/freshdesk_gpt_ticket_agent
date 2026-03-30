@@ -1,3 +1,4 @@
+/* eslint-disable no-unused-vars */
 /**
  * Sistema de logs simple para debug en producción
  */

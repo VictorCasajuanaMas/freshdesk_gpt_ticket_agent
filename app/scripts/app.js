@@ -19,7 +19,7 @@ const appState = {
 function initializeApp() {
   LogWrite('Iniciando aplicación GPT Ticket Assistant');
   
-  window.frsh_init().then(function(client_instance) {
+  app.initialized().then(function(client_instance) {
     // Inicializar sistema de debug
     initDebug();
     
@@ -40,11 +40,12 @@ function initializeApp() {
     // Evento principal cuando se activa la app
     client_instance.events.on('app.activated', renderText);
   }).catch(function(error) {
-    LogWrite('Error al inicializar aplicación: ' + error.message);
+    const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+    LogWrite('Error al inicializar aplicación: ' + errorMsg);
     console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
-      textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> Error al inicializar la aplicación: ${error.message}</p>`;
+      textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> Error al inicializar la aplicación: ${errorMsg}</p>`;
     }
   });
 }
@@ -85,8 +86,9 @@ async function renderText() {
     // Renderizar UI
     textElement.innerHTML = renderUI(formattedResponse);
   } catch (error) {
-    LogWrite('Error en renderText: ' + error.message);
+    const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
+    LogWrite('Error en renderText: ' + errorMsg);
     console.error('Error en renderText:', error);
-    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${error.message}</p>`;
+    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${errorMsg}</p>`;
   }
 }

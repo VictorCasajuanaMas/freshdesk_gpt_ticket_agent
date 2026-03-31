@@ -9,3 +9,8 @@ ejecutar fdk run
 Entrar en http://localhost:10001/custom_configs y añadir el ApiKey de Open AI y un prompt base que se pasará a todas las consultas ( revisar miprompt.md )
 
 abrir un ticket en freshdesk y en la url añadir ?dev=true ( ejemplo: https://visionwin.freshdesk.com/a/tickets/43073?dev=true )
+
+Para que funcione en dev=true, hay que desactivar CSP del navegador
+En chrome instalar la extensión ModHeader
+Añadir un Response header con el nombre: Content-Security-Policy y sin valor
+Con esto ha de funcionar.

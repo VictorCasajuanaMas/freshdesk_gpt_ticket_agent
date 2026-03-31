@@ -7,7 +7,7 @@
       "path": "/v1/chat/completions",
       "headers": {
         "Content-Type": "application/json",
-        "Authorization": "Bearer <%= encode(iparam.openai_api_key) %>"
+        "Authorization": "Bearer <%= iparam.openai_api_key %>"
       }
     }
   }

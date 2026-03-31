@@ -12,7 +12,7 @@
     let client;
     
     const init = async () => {
-      client = await window.frsh_init();
+      client = await app.initialized();
       document.querySelector('form').addEventListener('submit', handleSubmit);
     };
 

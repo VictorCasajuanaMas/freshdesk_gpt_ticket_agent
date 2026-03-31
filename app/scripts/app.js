@@ -19,13 +19,16 @@ const appState = {
 function initializeApp() {
   LogWrite('Iniciando aplicación GPT Ticket Assistant');
   
-  app.initialized().then(function(client_instance) {
+  app.initialized().then(async function(client_instance) {
+    // Asignar al estado global primero (i18n y debug dependen de window.client)
+    appState.client = client_instance;
+    window.client = client_instance;
+
     // Inicializar sistema de debug
     initDebug();
     
-    // Asignar al estado global
-    appState.client = client_instance;
-    window.client = client_instance;
+    // Inicializar traducciones
+    await initI18n();
     
     LogWrite('Cliente inicializado correctamente');
     
@@ -45,7 +48,7 @@ function initializeApp() {
     console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
-      textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> Error al inicializar la aplicación: ${errorMsg}</p>`;
+      textElement.innerHTML = renderError(errorMsg);
     }
   });
 }
@@ -70,7 +73,7 @@ async function renderText() {
     LogWrite('Datos del ticket obtenidos - iniciando consulta a ChatGPT');
 
     // Mostrar spinner de loading
-    textElement.innerHTML = renderLoadingSpinner('Consultando al asistente...');
+    textElement.innerHTML = renderLoadingSpinner(t('loading'));
     
     // Generar respuesta de ChatGPT
     const chatGPTResponse = await callChatGPT(subject, description);
@@ -89,6 +92,6 @@ async function renderText() {
     const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
     LogWrite('Error en renderText: ' + errorMsg);
     console.error('Error en renderText:', error);
-    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${errorMsg}</p>`;
+    textElement.innerHTML = renderError(errorMsg);
   }
 }

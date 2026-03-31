@@ -1,0 +1,22 @@
+{
+  "loading": "Konsulterar assistenten...",
+  "loadingNewResponse": "Genererar nytt svar...",
+  "btnAdd": "Lägg till",
+  "btnAddTitle": "Lägg till svaret i ärendet",
+  "btnOther": "Annat",
+  "btnOtherTitle": "Begär ett annat svar med mer kontext",
+  "btnAccept": "Acceptera",
+  "btnCancel": "Avbryt",
+  "modalTitle": "Annat Svar",
+  "modalPlaceholder": "Skriv ytterligare information här",
+  "modalEmptyAlert": "Skriv ytterligare information innan du accepterar.",
+  "notifyResponseInserted": "Svar infogat i redigeraren",
+  "errorApiKey": "OpenAI API-nyckeln är ogiltig. Kontrollera appens konfiguration.",
+  "errorRateLimit": "Användningsgränsen för OpenAI API har överskridits. Försök igen senare.",
+  "errorServer500": "Internt fel på OpenAI-servrarna. Försök igen senare.",
+  "errorServer503": "OpenAI-tjänsten är tillfälligt otillgänglig. Försök igen senare.",
+  "errorUnknown": "Okänt fel vid anslutning till OpenAI.",
+  "errorAdditionalInfo": "YTTERLIGARE INFORMATION",
+  "promptSubject": "Ämne",
+  "promptBody": "Innehåll"
+}

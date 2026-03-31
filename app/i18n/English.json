@@ -1,0 +1,22 @@
+{
+  "loading": "Consulting the assistant...",
+  "loadingNewResponse": "Generating new response...",
+  "btnAdd": "Add",
+  "btnAddTitle": "Add the response to the ticket",
+  "btnOther": "Other",
+  "btnOtherTitle": "Request another response with more context",
+  "btnAccept": "Accept",
+  "btnCancel": "Cancel",
+  "modalTitle": "Another Response",
+  "modalPlaceholder": "Write additional information here",
+  "modalEmptyAlert": "Please write additional information before accepting.",
+  "notifyResponseInserted": "Response inserted in the editor",
+  "errorApiKey": "The OpenAI API Key is not valid. Check the app configuration.",
+  "errorRateLimit": "OpenAI API rate limit exceeded. Please try again later.",
+  "errorServer500": "Internal error on OpenAI servers. Please try again later.",
+  "errorServer503": "OpenAI service is temporarily unavailable. Please try again later.",
+  "errorUnknown": "Unknown error contacting OpenAI.",
+  "errorAdditionalInfo": "ADDITIONAL INFORMATION",
+  "promptSubject": "Subject",
+  "promptBody": "Body"
+}

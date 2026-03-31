@@ -23,7 +23,7 @@ async function callChatGPT(subject, description, additionalInfo = null) {
   let finalPrompt = systemPrompt;
   
   if (additionalInfo) {
-    finalPrompt += `\n\nINFORMACIÓN ADICIONAL: ${additionalInfo}`;
+    finalPrompt += `\n\n${t('errorAdditionalInfo')}: ${additionalInfo}`;
   }
 
   // Preparar el request body
@@ -31,7 +31,7 @@ async function callChatGPT(subject, description, additionalInfo = null) {
     model: 'gpt-3.5-turbo',
     messages: [
       { role: 'system', content: finalPrompt },
-      { role: 'user', content: `Asunto: ${subject}\nCuerpo: ${description}` }
+      { role: 'user', content: `${t('promptSubject')}: ${subject}\n${t('promptBody')}: ${description}` }
     ],
     temperature: 0.7
   };
@@ -49,33 +49,40 @@ async function callChatGPT(subject, description, additionalInfo = null) {
 
   const data = JSON.parse(response.response);
   LogWrite('Respuesta de ChatGPT recibida exitosamente');
-  return data.choices[0].message.content;
+  
+  let content = data.choices[0].message.content;
+  // Strip markdown code block wrapper if present (```json ... ```)
+  content = content.replace(/^```(?:json)?\s*\n?/i, '').replace(/\n?```\s*$/i, '');
+  return content;
 }
 
-const OPENAI_ERROR_MESSAGES = {
-  401: 'La API Key de OpenAI no es válida. Revisa la configuración de la app.',
-  429: 'Se ha superado el límite de uso de la API de OpenAI. Inténtalo de nuevo más tarde.',
-  500: 'Error interno en los servidores de OpenAI. Inténtalo de nuevo más tarde.',
-  503: 'El servicio de OpenAI no está disponible temporalmente. Inténtalo de nuevo más tarde.'
+const OPENAI_ERROR_KEYS = {
+  401: 'errorApiKey',
+  429: 'errorRateLimit',
+  500: 'errorServer500',
+  503: 'errorServer503'
 };
+
+function extractOpenAIMessage(response) {
+  const body = typeof response === 'string' ? JSON.parse(response) : response;
+  return body && body.error && body.error.message ? body.error.message : null;
+}
 
 function parseOpenAIError(err) {
   const status = err.status || 0;
 
-  // Check for known status codes first
-  if (OPENAI_ERROR_MESSAGES[status]) {
-    return OPENAI_ERROR_MESSAGES[status];
+  if (OPENAI_ERROR_KEYS[status]) {
+    return t(OPENAI_ERROR_KEYS[status]);
   }
 
-  // Try to extract the message from the OpenAI JSON error response
   try {
-    const body = typeof err.response === 'string' ? JSON.parse(err.response) : err.response;
-    if (body && body.error && body.error.message) {
-      return `Error de OpenAI: ${body.error.message}`;
+    const extracted = extractOpenAIMessage(err.response);
+    if (extracted) {
+      return extracted;
     }
   } catch (_) {
     // response wasn't JSON, fall through
   }
 
-  return err.message || 'Error desconocido al contactar con OpenAI.';
+  return err.message || t('errorUnknown');
 }

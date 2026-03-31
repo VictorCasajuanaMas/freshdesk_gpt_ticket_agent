@@ -1,0 +1,22 @@
+{
+  "loading": "Assistent raadplegen...",
+  "loadingNewResponse": "Nieuw antwoord genereren...",
+  "btnAdd": "Toevoegen",
+  "btnAddTitle": "Antwoord toevoegen aan het ticket",
+  "btnOther": "Ander",
+  "btnOtherTitle": "Een ander antwoord aanvragen met meer context",
+  "btnAccept": "Accepteren",
+  "btnCancel": "Annuleren",
+  "modalTitle": "Ander Antwoord",
+  "modalPlaceholder": "Schrijf hier aanvullende informatie",
+  "modalEmptyAlert": "Schrijf aanvullende informatie voordat u accepteert.",
+  "notifyResponseInserted": "Antwoord ingevoegd in de editor",
+  "errorApiKey": "De OpenAI API-sleutel is ongeldig. Controleer de app-configuratie.",
+  "errorRateLimit": "De gebruikslimiet van de OpenAI API is overschreden. Probeer het later opnieuw.",
+  "errorServer500": "Interne fout op de OpenAI-servers. Probeer het later opnieuw.",
+  "errorServer503": "De OpenAI-service is tijdelijk niet beschikbaar. Probeer het later opnieuw.",
+  "errorUnknown": "Onbekende fout bij het verbinden met OpenAI.",
+  "errorAdditionalInfo": "AANVULLENDE INFORMATIE",
+  "promptSubject": "Onderwerp",
+  "promptBody": "Inhoud"
+}

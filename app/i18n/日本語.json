@@ -1,0 +1,22 @@
+{
+  "loading": "アシスタントに問い合わせ中...",
+  "loadingNewResponse": "新しい回答を生成中...",
+  "btnAdd": "追加",
+  "btnAddTitle": "チケットに回答を追加",
+  "btnOther": "別の回答",
+  "btnOtherTitle": "追加コンテキストで別の回答をリクエスト",
+  "btnAccept": "承認",
+  "btnCancel": "キャンセル",
+  "modalTitle": "別の回答",
+  "modalPlaceholder": "追加情報をここに入力してください",
+  "modalEmptyAlert": "承認する前に追加情報を入力してください。",
+  "notifyResponseInserted": "回答がエディタに挿入されました",
+  "errorApiKey": "OpenAI APIキーが無効です。アプリの設定を確認してください。",
+  "errorRateLimit": "OpenAI APIの使用制限を超えました。後でもう一度お試しください。",
+  "errorServer500": "OpenAIサーバーで内部エラーが発生しました。後でもう一度お試しください。",
+  "errorServer503": "OpenAIサービスは一時的に利用できません。後でもう一度お試しください。",
+  "errorUnknown": "OpenAIへの接続中に不明なエラーが発生しました。",
+  "errorAdditionalInfo": "追加情報",
+  "promptSubject": "件名",
+  "promptBody": "本文"
+}

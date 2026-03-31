@@ -9,7 +9,7 @@
  */
 function showOtraModal() {
   appState.client.interface.trigger('showModal', {
-    title: 'Otra Respuesta',
+    title: t('modalTitle'),
     template: './modal.html'
   });
 }
@@ -31,7 +31,7 @@ async function handleTextoAdicional(textoAdicional) {
   const textElement = document.getElementById('apptext');
   
   try {
-    textElement.innerHTML = renderLoadingSpinner('Generando nueva respuesta...');
+    textElement.innerHTML = renderLoadingSpinner(t('loadingNewResponse'));
     
     const { subject, description } = appState.currentTicketData;
     const response = await callChatGPT(subject, description, textoAdicional);
@@ -46,6 +46,6 @@ async function handleTextoAdicional(textoAdicional) {
   } catch (error) {
     LogWrite('Error al generar respuesta adicional: ' + error.message);
     console.error('Error en handleTextoAdicional:', error);
-    textElement.innerHTML = `<p class="fw-type-base"><strong>Error:</strong> ${error.message}</p>`;
+    textElement.innerHTML = renderError(error.message);
   }
 }

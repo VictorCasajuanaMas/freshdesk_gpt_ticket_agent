@@ -11,8 +11,8 @@
 function formatResponse(response) {
   const parsedResponse = JSON.parse(response);
   return `
-    <p>${parsedResponse.estado.emoji} ${parsedResponse.estado.estado}</p>
-    <div>${parsedResponse.respuesta.replace(/\n/g, '<br>')}</div>
+    <p>${parsedResponse.status.emoji} ${parsedResponse.status.status}</p>
+    <div>${parsedResponse.response.replace(/\n/g, '<br>')}</div>
   `;
 }
 
@@ -24,8 +24,8 @@ function formatResponse(response) {
 function renderUI(formattedResponse) {
   return `
     <div style="margin-bottom: 12px; display: flex; gap: 8px; flex-wrap: wrap;">
-      <fw-button color="primary" onclick="addResponseToTicket()" title="Añade la respuesta al ticket">Añadir</fw-button>
-      <fw-button color="secondary" onclick="showOtraModal()" title="Solicita otra respuesta con más contexto">Otra</fw-button>
+      <fw-button color="primary" onclick="addResponseToTicket()" title="${t('btnAddTitle')}">${t('btnAdd')}</fw-button>
+      <fw-button color="secondary" onclick="showOtraModal()" title="${t('btnOtherTitle')}">${t('btnOther')}</fw-button>
     </div>
     <div class="fw-type-base">${formattedResponse}</div>
   `;
@@ -41,5 +41,14 @@ function renderLoadingSpinner(message) {
     <fw-spinner size="small"></fw-spinner>
     <span class="fw-type-base">${message}</span>
   </div>`;
+}
+
+/**
+ * Renderizar mensaje de error con estilo visual
+ * @param {string} message - Mensaje de error a mostrar
+ * @returns {string} - HTML del error con estilo rojo
+ */
+function renderError(message) {
+  return `<fw-inline-message open type="error">${message}</fw-inline-message>`;
 }
 

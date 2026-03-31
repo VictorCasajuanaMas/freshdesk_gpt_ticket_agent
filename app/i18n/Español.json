@@ -1,0 +1,22 @@
+{
+  "loading": "Consultando al asistente...",
+  "loadingNewResponse": "Generando nueva respuesta...",
+  "btnAdd": "Añadir",
+  "btnAddTitle": "Añade la respuesta al ticket",
+  "btnOther": "Otra",
+  "btnOtherTitle": "Solicita otra respuesta con más contexto",
+  "btnAccept": "Aceptar",
+  "btnCancel": "Cancelar",
+  "modalTitle": "Otra Respuesta",
+  "modalPlaceholder": "Escribe información adicional aquí",
+  "modalEmptyAlert": "Escribe información adicional antes de aceptar.",
+  "notifyResponseInserted": "Respuesta insertada en el editor",
+  "errorApiKey": "La API Key de OpenAI no es válida. Revisa la configuración de la app.",
+  "errorRateLimit": "Se ha superado el límite de uso de la API de OpenAI. Inténtalo de nuevo más tarde.",
+  "errorServer500": "Error interno en los servidores de OpenAI. Inténtalo de nuevo más tarde.",
+  "errorServer503": "El servicio de OpenAI no está disponible temporalmente. Inténtalo de nuevo más tarde.",
+  "errorUnknown": "Error desconocido al contactar con OpenAI.",
+  "errorAdditionalInfo": "INFORMACIÓN ADICIONAL",
+  "promptSubject": "Asunto",
+  "promptBody": "Cuerpo"
+}

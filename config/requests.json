@@ -10,5 +10,16 @@
         "Authorization": "Bearer <%= iparam.openai_api_key %>"
       }
     }
+  },
+  "openaiValidateKey": {
+    "schema": {
+      "method": "GET",
+      "protocol": "https",
+      "host": "api.openai.com",
+      "path": "/v1/models",
+      "headers": {
+        "Authorization": "Bearer <%= iparam.openai_api_key %>"
+      }
+    }
   }
 }

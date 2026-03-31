@@ -1,24 +1,32 @@
 {
   "openai_api_key": {
     "display_name": "OpenAI API Key",
-    "description": "Tu API key de OpenAI para ChatGPT",
+    "description": "Your OpenAI API key for ChatGPT (starts with sk-). Validated against OpenAI API on install.",
     "type": "text",
     "secure": true,
     "required": true,
     "default_value": ""
   },
   "system_prompt": {
-    "display_name": "Prompt del Sistema",
-    "description": "Prompt personalizado que define cómo debe comportarse ChatGPT al analizar tickets",
+    "display_name": "System Prompt",
+    "description": "Custom prompt that defines how ChatGPT should behave when analyzing tickets",
     "type": "paragraph",
     "required": true,
-    "default_value": "Eres un asistente especializado en atención al cliente. Analiza el siguiente ticket de soporte y genera una respuesta profesional, empática y útil. Responde en formato JSON con esta estructura: {\"estado\": {\"emoji\": \"😊\", \"estado\": \"Descripción del estado\"}, \"respuesta\": \"Tu respuesta detallada aquí\"}"
+    "default_value": "You are a customer support assistant. Analyze the following support ticket and generate a professional, empathetic and helpful response. Respond in JSON format with this structure: {\"status\": {\"emoji\": \"😊\", \"status\": \"Status description\"}, \"response\": \"Your detailed response here\"}"
   },
   "debug_enabled": {
-    "display_name": "Habilitar Debug",
-    "description": "Activar logs de debug en consola para diagnóstico",
+    "display_name": "Enable Debug",
+    "description": "Enable debug logs in the console for diagnostics",
     "type": "checkbox",
     "required": false,
     "default_value": false
+  },
+  "app_language": {
+    "display_name": "Language",
+    "description": "Select the app interface language",
+    "type": "dropdown",
+    "required": true,
+    "default_value": "English",
+    "options": ["English", "Español", "Français", "Italiano", "Deutsch", "Português", "日本語", "Nederlands", "中文", "Polski", "Svenska"]
   }
 }

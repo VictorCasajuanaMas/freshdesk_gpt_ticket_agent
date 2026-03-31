@@ -1,0 +1,22 @@
+{
+  "loading": "正在咨询助手...",
+  "loadingNewResponse": "正在生成新回复...",
+  "btnAdd": "添加",
+  "btnAddTitle": "将回复添加到工单",
+  "btnOther": "其他",
+  "btnOtherTitle": "请求另一个包含更多上下文的回复",
+  "btnAccept": "接受",
+  "btnCancel": "取消",
+  "modalTitle": "其他回复",
+  "modalPlaceholder": "在此输入附加信息",
+  "modalEmptyAlert": "请在接受前输入附加信息。",
+  "notifyResponseInserted": "回复已插入编辑器",
+  "errorApiKey": "OpenAI API密钥无效。请检查应用配置。",
+  "errorRateLimit": "已超出OpenAI API使用限制。请稍后重试。",
+  "errorServer500": "OpenAI服务器内部错误。请稍后重试。",
+  "errorServer503": "OpenAI服务暂时不可用。请稍后重试。",
+  "errorUnknown": "连接OpenAI时发生未知错误。",
+  "errorAdditionalInfo": "附加信息",
+  "promptSubject": "主题",
+  "promptBody": "正文"
+}

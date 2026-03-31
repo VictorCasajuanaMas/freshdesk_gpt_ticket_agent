@@ -1,0 +1,22 @@
+{
+  "loading": "Assistent wird konsultiert...",
+  "loadingNewResponse": "Neue Antwort wird generiert...",
+  "btnAdd": "Hinzufügen",
+  "btnAddTitle": "Antwort zum Ticket hinzufügen",
+  "btnOther": "Andere",
+  "btnOtherTitle": "Eine weitere Antwort mit mehr Kontext anfordern",
+  "btnAccept": "Akzeptieren",
+  "btnCancel": "Abbrechen",
+  "modalTitle": "Andere Antwort",
+  "modalPlaceholder": "Zusätzliche Informationen hier eingeben",
+  "modalEmptyAlert": "Bitte geben Sie zusätzliche Informationen ein, bevor Sie akzeptieren.",
+  "notifyResponseInserted": "Antwort im Editor eingefügt",
+  "errorApiKey": "Der OpenAI API-Schlüssel ist ungültig. Überprüfen Sie die App-Konfiguration.",
+  "errorRateLimit": "Das Nutzungslimit der OpenAI API wurde überschritten. Bitte versuchen Sie es später erneut.",
+  "errorServer500": "Interner Fehler auf den OpenAI-Servern. Bitte versuchen Sie es später erneut.",
+  "errorServer503": "Der OpenAI-Dienst ist vorübergehend nicht verfügbar. Bitte versuchen Sie es später erneut.",
+  "errorUnknown": "Unbekannter Fehler bei der Verbindung mit OpenAI.",
+  "errorAdditionalInfo": "ZUSÄTZLICHE INFORMATIONEN",
+  "promptSubject": "Betreff",
+  "promptBody": "Inhalt"
+}

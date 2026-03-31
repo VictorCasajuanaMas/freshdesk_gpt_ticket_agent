@@ -1,0 +1,22 @@
+{
+  "loading": "Konsultacja z asystentem...",
+  "loadingNewResponse": "Generowanie nowej odpowiedzi...",
+  "btnAdd": "Dodaj",
+  "btnAddTitle": "Dodaj odpowiedź do zgłoszenia",
+  "btnOther": "Inna",
+  "btnOtherTitle": "Poproś o inną odpowiedź z większym kontekstem",
+  "btnAccept": "Akceptuj",
+  "btnCancel": "Anuluj",
+  "modalTitle": "Inna Odpowiedź",
+  "modalPlaceholder": "Wpisz dodatkowe informacje tutaj",
+  "modalEmptyAlert": "Wpisz dodatkowe informacje przed zaakceptowaniem.",
+  "notifyResponseInserted": "Odpowiedź wstawiona do edytora",
+  "errorApiKey": "Klucz API OpenAI jest nieprawidłowy. Sprawdź konfigurację aplikacji.",
+  "errorRateLimit": "Przekroczono limit użycia API OpenAI. Spróbuj ponownie później.",
+  "errorServer500": "Wewnętrzny błąd serwerów OpenAI. Spróbuj ponownie później.",
+  "errorServer503": "Usługa OpenAI jest tymczasowo niedostępna. Spróbuj ponownie później.",
+  "errorUnknown": "Nieznany błąd podczas łączenia z OpenAI.",
+  "errorAdditionalInfo": "DODATKOWE INFORMACJE",
+  "promptSubject": "Temat",
+  "promptBody": "Treść"
+}

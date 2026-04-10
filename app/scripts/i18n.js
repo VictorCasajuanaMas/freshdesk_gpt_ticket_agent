@@ -13,8 +13,13 @@ async function initI18n() {
   const iparams = await window.client.iparams.get();
   const language = iparams.app_language || 'English';
 
-  const response = await fetch(`i18n/${language}.json`);
-  i18n.strings = await response.json();
+  i18n.strings = await new Promise((resolve, reject) => {
+    const xhr = new XMLHttpRequest();
+    xhr.open('GET', `i18n/${language}.json`);
+    xhr.onload = () => resolve(JSON.parse(xhr.responseText));
+    xhr.onerror = () => reject(new Error('Failed to load i18n'));
+    xhr.send();
+  });
 }
 
 /**

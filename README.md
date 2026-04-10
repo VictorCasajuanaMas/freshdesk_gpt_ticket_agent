@@ -4,7 +4,7 @@ Instalar Node: https://nodejs.org/es/
 Instalar CLi de freshdesk: https://developers.freshworks.com/docs/app-sdk/v3.0/common/app-development-process/#install-the-fdk-+-cli
 clonar repositorio
 
-ejecutar fdk run
+ejecutar fdk-run.bat
 
 Entrar en http://localhost:10001/custom_configs y añadir el ApiKey de Open AI y un prompt base que se pasará a todas las consultas ( revisar miprompt.md )
 
@@ -14,3 +14,5 @@ Para que funcione en dev=true, hay que desactivar CSP del navegador
 En chrome instalar la extensión ModHeader
 Añadir un Response header con el nombre: Content-Security-Policy y sin valor
 Con esto ha de funcionar.
+
+Para pasar los tests ejecutar fdk-test.bat

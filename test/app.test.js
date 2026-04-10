@@ -139,7 +139,7 @@ function createAppSandbox(overrides) {
 var LOGGER_VARS = ['logger', 'initDebug', 'LogWrite'];
 var I18N_VARS = ['i18n', 'initI18n', 't'];
 var CHATGPT_VARS = ['callChatGPT', 'OPENAI_ERROR_KEYS', 'extractOpenAIMessage', 'parseOpenAIError'];
-var UIRENDERER_VARS = ['formatResponse', 'renderUI', 'renderLoadingSpinner', 'renderError'];
+var UIRENDERER_VARS = ['escapeHtml', 'formatResponse', 'renderUI', 'renderLoadingSpinner', 'renderError'];
 var TICKET_VARS = ['extractResponseText', 'addResponseToTicket'];
 var MODAL_VARS = ['showOtraModal', 'handleTextoAdicional'];
 var APP_VARS = ['appState', 'initializeApp', 'renderText'];
@@ -170,6 +170,47 @@ describe('logger.js', function () {
 
   it('initDebug should handle missing client gracefully', function (done) {
     const ctx = createAppSandbox({ window: {} });
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.initDebug().then(function () {
+      assert.strictEqual(ctx.logger.enabled, false);
+      mergeCoverage(ctx);
+      done();
+    });
+  });
+
+  it('initDebug should handle client without iparams', function (done) {
+    const ctx = createAppSandbox({ window: { client: {} } });
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.initDebug().then(function () {
+      assert.strictEqual(ctx.logger.enabled, false);
+      mergeCoverage(ctx);
+      done();
+    });
+  });
+
+  it('initDebug should catch iparams.get errors', function (done) {
+    const ctx = createAppSandbox({
+      window: {
+        client: {
+          iparams: {
+            get: function () { return Promise.reject(new Error('fail')); }
+          }
+        }
+      }
+    });
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.initDebug().then(function () {
+      assert.strictEqual(ctx.logger.enabled, false);
+      mergeCoverage(ctx);
+      done();
+    });
+  });
+
+  it('initDebug should default to false when debug_enabled is falsy', function (done) {
+    const ctx = createAppSandbox();
+    ctx.window.client.iparams.get = function () {
+      return Promise.resolve({ debug_enabled: false });
+    };
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, false);
@@ -209,10 +250,12 @@ describe('i18n.js', function () {
 
   it('initI18n should load translations', function (done) {
     const ctx = createAppSandbox();
-    ctx.fetch = function () {
-      return Promise.resolve({
-        json: function () { return Promise.resolve({ btnAdd: 'Add' }); }
-      });
+    ctx.XMLHttpRequest = function () {
+      this.open = function () {};
+      this.send = function () {
+        this.responseText = JSON.stringify({ btnAdd: 'Add' });
+        this.onload();
+      };
     };
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
     ctx.initI18n().then(function () {
@@ -220,6 +263,46 @@ describe('i18n.js', function () {
       mergeCoverage(ctx);
       done();
     });
+  });
+
+  it('initI18n should fallback to English when app_language is missing', function (done) {
+    const ctx = createAppSandbox();
+    ctx.window.client.iparams.get = function () {
+      return Promise.resolve({ debug_enabled: false });
+    };
+    let requestedUrl;
+    ctx.XMLHttpRequest = function () {
+      this.open = function (_method, url) { requestedUrl = url; };
+      this.send = function () {
+        this.responseText = JSON.stringify({ key: 'val' });
+        this.onload();
+      };
+    };
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.initI18n().then(function () {
+      assert.ok(requestedUrl.includes('English'));
+      mergeCoverage(ctx);
+      done();
+    });
+  });
+
+  it('initI18n should reject when XHR fails', function (done) {
+    const ctx = createAppSandbox();
+    ctx.XMLHttpRequest = function () {
+      this.open = function () {};
+      this.send = function () {
+        this.onerror();
+      };
+    };
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.initI18n().then(
+      function () { assert.fail('Should have rejected'); },
+      function (err) {
+        assert.ok(err.message.includes('Failed to load i18n'));
+        mergeCoverage(ctx);
+        done();
+      }
+    );
   });
 
   it('t() should return key when string not found', function () {
@@ -273,6 +356,50 @@ describe('ui-renderer.js', function () {
     const result = ctx.renderError('Something failed');
     assert.ok(result.includes('Something failed'));
     assert.ok(result.includes('error'));
+    mergeCoverage(ctx);
+  });
+
+  it('escapeHtml should escape HTML special characters', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    const result = ctx.escapeHtml('<script>"xss"&\'test\'</script>');
+    assert.ok(result.includes('&lt;'));
+    assert.ok(result.includes('&gt;'));
+    assert.ok(result.includes('&quot;'));
+    assert.ok(result.includes('&#039;'));
+    assert.ok(result.includes('&amp;'));
+    assert.ok(!result.includes('<script>'));
+    mergeCoverage(ctx);
+  });
+
+  it('escapeHtml should return empty string for non-string input', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    assert.strictEqual(ctx.escapeHtml(null), '');
+    assert.strictEqual(ctx.escapeHtml(undefined), '');
+    assert.strictEqual(ctx.escapeHtml(123), '');
+    mergeCoverage(ctx);
+  });
+
+  it('renderError should escape HTML in error messages', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    const result = ctx.renderError('<img onerror=alert(1)>');
+    assert.ok(!result.includes('<img'));
+    assert.ok(result.includes('&lt;img'));
+    mergeCoverage(ctx);
+  });
+
+  it('formatResponse should escape HTML in response fields', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { btnAdd: 'Add', btnOther: 'Other', btnAddTitle: 'Add', btnOtherTitle: 'Other' };
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    const json = JSON.stringify({ status: { emoji: '✅', status: '<b>bold</b>' }, response: 'line1\nline2' });
+    const result = ctx.formatResponse(json);
+    assert.ok(result.includes('&lt;b&gt;'));
+    assert.ok(result.includes('<br>'));
+    assert.ok(!result.includes('<b>bold</b>'));
     mergeCoverage(ctx);
   });
 });
@@ -448,6 +575,33 @@ describe('chatgpt-service.js', function () {
 
     const result = ctx.extractOpenAIMessage(JSON.stringify({ error: { message: 'from string' } }));
     assert.strictEqual(result, 'from string');
+    mergeCoverage(ctx);
+  });
+
+  it('extractOpenAIMessage should return null for null input', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+
+    assert.strictEqual(ctx.extractOpenAIMessage(null), null);
+    assert.strictEqual(ctx.extractOpenAIMessage(undefined), null);
+    mergeCoverage(ctx);
+  });
+
+  it('parseOpenAIError should fall back when response JSON has no error message', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { errorUnknown: 'Unknown error' };
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+
+    const result = ctx.parseOpenAIError({
+      status: 0,
+      response: JSON.stringify({ data: 'no error field' }),
+      message: 'Fallback'
+    });
+    assert.strictEqual(result, 'Fallback');
     mergeCoverage(ctx);
   });
 });
@@ -697,6 +851,99 @@ describe('app.js', function () {
       mergeCoverage(ctx);
       done();
     }, 200);
+  });
+
+  it('initializeApp catch should handle object errors via JSON.stringify', function (done) {
+    const textEl = { innerHTML: '' };
+    const ctx = createAppSandbox();
+    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.app = {
+      initialized: function () {
+        return Promise.reject({ code: 42 });
+      }
+    };
+    ctx.console = { error: function () {} };
+
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    loadInstrumented('app/scripts/ticket-handler.js', ctx, TICKET_VARS);
+    loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
+    loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
+
+    setTimeout(function () {
+      assert.ok(textEl.innerHTML.includes('42'));
+      mergeCoverage(ctx);
+      done();
+    }, 200);
+  });
+
+  it('initializeApp catch should handle null textElement', function (done) {
+    const ctx = createAppSandbox();
+    ctx.document = { getElementById: function () { return null; } };
+    ctx.app = {
+      initialized: function () {
+        return Promise.reject(new Error('Init failed'));
+      }
+    };
+    ctx.console = { error: function () {} };
+
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    loadInstrumented('app/scripts/ticket-handler.js', ctx, TICKET_VARS);
+    loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
+    loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
+
+    setTimeout(function () {
+      // No crash even if textElement is null
+      mergeCoverage(ctx);
+      done();
+    }, 200);
+  });
+
+  it('renderText should handle object error without message property', function (done) {
+    const textEl = { innerHTML: '' };
+    const failingClient = {
+      iparams: { get: function () { return Promise.resolve({ app_language: 'English', debug_enabled: false }); } },
+      request: { invokeTemplate: function () { return Promise.resolve({ response: '{}' }); } },
+      interface: { trigger: function () { return Promise.resolve(); } },
+      data: { get: function () { return Promise.reject({ code: 'NETWORK' }); } },
+      instance: { receive: function () {} },
+      events: { on: function () {} }
+    };
+    const ctx = createAppSandbox();
+    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.console = { error: function () {}, log: function () {}, warn: function () {} };
+    ctx.fetch = function () {
+      return Promise.resolve({
+        json: function () { return Promise.resolve({ loading: 'Loading...' }); }
+      });
+    };
+    ctx.app = { initialized: function () { return Promise.resolve(failingClient); } };
+
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.logger.enabled = false;
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    loadInstrumented('app/scripts/ticket-handler.js', ctx, TICKET_VARS);
+    loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
+
+    ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null };
+    loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
+
+    setTimeout(function () {
+      ctx.appState.client = failingClient;
+      ctx.renderText();
+      setTimeout(function () {
+        assert.ok(textEl.innerHTML.includes('NETWORK'));
+        mergeCoverage(ctx);
+        done();
+      }, 500);
+    }, 500);
   });
 
   it('renderText should show response on success', function (done) {

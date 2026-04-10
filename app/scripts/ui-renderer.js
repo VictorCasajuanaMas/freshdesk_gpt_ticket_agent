@@ -3,6 +3,16 @@
  * Funciones para el renderizado de la interfaz de usuario
  */
 
+function escapeHtml(str) {
+  if (typeof str !== 'string') return '';
+  return str
+    .replace(/&/g, '&amp;')
+    .replace(/</g, '&lt;')
+    .replace(/>/g, '&gt;')
+    .replace(/"/g, '&quot;')
+    .replace(/'/g, '&#039;');
+}
+
 /**
  * Formatear respuesta de ChatGPT para mostrar en la UI
  * @param {string} response - Respuesta raw de ChatGPT
@@ -10,9 +20,12 @@
  */
 function formatResponse(response) {
   const parsedResponse = JSON.parse(response);
+  const emoji = escapeHtml(parsedResponse.status.emoji);
+  const status = escapeHtml(parsedResponse.status.status);
+  const responseText = escapeHtml(parsedResponse.response).replace(/\n/g, '<br>');
   return `
-    <p>${parsedResponse.status.emoji} ${parsedResponse.status.status}</p>
-    <div>${parsedResponse.response.replace(/\n/g, '<br>')}</div>
+    <p>${emoji} ${status}</p>
+    <div>${responseText}</div>
   `;
 }
 
@@ -49,6 +62,6 @@ function renderLoadingSpinner(message) {
  * @returns {string} - HTML del error con estilo rojo
  */
 function renderError(message) {
-  return `<fw-inline-message open type="error">${message}</fw-inline-message>`;
+  return `<fw-inline-message open type="error">${escapeHtml(message)}</fw-inline-message>`;
 }
 

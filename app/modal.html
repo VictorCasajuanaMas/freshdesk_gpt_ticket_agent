@@ -11,6 +11,16 @@
   <script>
     let client;
     let strings = {};
+
+    const escapeHtml = (str) => {
+      if (typeof str !== 'string') return '';
+      return str
+        .replace(/&/g, '&amp;')
+        .replace(/</g, '&lt;')
+        .replace(/>/g, '&gt;')
+        .replace(/"/g, '&quot;')
+        .replace(/'/g, '&#039;');
+    };
     
     const init = async () => {
       client = await app.initialized();
@@ -40,7 +50,7 @@
       if (!textoValue || !textoValue.trim()) {
         if (!document.getElementById('emptyAlert')) {
           const alertContainer = document.getElementById('alertContainer');
-          alertContainer.innerHTML = `<fw-inline-message id="emptyAlert" open type="warning">${strings.modalEmptyAlert || ''}</fw-inline-message>`;
+          alertContainer.innerHTML = `<fw-inline-message id="emptyAlert" open type="warning">${escapeHtml(strings.modalEmptyAlert || '')}</fw-inline-message>`;
         }
         return;
       }

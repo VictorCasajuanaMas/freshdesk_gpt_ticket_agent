@@ -46,6 +46,6 @@ async function handleTextoAdicional(textoAdicional) {
   } catch (error) {
     LogWrite('Error al generar respuesta adicional: ' + error.message);
     console.error('Error en handleTextoAdicional:', error);
-    textElement.innerHTML = renderError(error.message);
+    renderErrorSafe(textElement, error.message);
   }
 }

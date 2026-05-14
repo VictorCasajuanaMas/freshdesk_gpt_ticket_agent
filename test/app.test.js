@@ -34,7 +34,8 @@ function mergeCoverage(sandbox) {
 function loadInstrumented(relPath, sandbox, varNames) {
   const absPath = path.join(process.cwd(), relPath);
   const code = fs.readFileSync(absPath, 'utf8');
-  const instrumented = instrumenter.instrumentSync(code, relPath);
+  const normalizedPath = path.relative(process.cwd(), absPath);
+  const instrumented = instrumenter.instrumentSync(code, normalizedPath);
 
   if (varNames && varNames.length) {
     const assignments = varNames.map(function (v) {
@@ -111,7 +112,10 @@ function createAppSandbox(overrides) {
     },
     document: {
       getElementById: function () {
-        return { innerHTML: '' };
+        return { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
+      },
+      createElement: function () {
+        return { textContent: '', setAttribute: function () {} };
       }
     },
     app: {
@@ -139,7 +143,7 @@ function createAppSandbox(overrides) {
 var LOGGER_VARS = ['logger', 'initDebug', 'LogWrite'];
 var I18N_VARS = ['i18n', 'initI18n', 't'];
 var CHATGPT_VARS = ['callChatGPT', 'OPENAI_ERROR_KEYS', 'extractOpenAIMessage', 'parseOpenAIError'];
-var UIRENDERER_VARS = ['escapeHtml', 'formatResponse', 'renderUI', 'renderLoadingSpinner', 'renderError'];
+var UIRENDERER_VARS = ['escapeHtml', 'formatResponse', 'renderUI', 'renderLoadingSpinner', 'renderError', 'renderErrorSafe'];
 var TICKET_VARS = ['extractResponseText', 'addResponseToTicket'];
 var MODAL_VARS = ['showOtraModal', 'handleTextoAdicional'];
 var APP_VARS = ['appState', 'initializeApp', 'renderText'];
@@ -158,37 +162,34 @@ function loadAllScripts(sandbox) {
 // =========================================================
 describe('logger.js', function () {
 
-  it('initDebug should set debug from iparams', function (done) {
+  it('initDebug should set debug from iparams', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
-    ctx.initDebug().then(function () {
+    return ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, true);
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initDebug should handle missing client gracefully', function (done) {
+  it('initDebug should handle missing client gracefully', function () {
     const ctx = createAppSandbox({ window: {} });
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
-    ctx.initDebug().then(function () {
+    return ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, false);
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initDebug should handle client without iparams', function (done) {
+  it('initDebug should handle client without iparams', function () {
     const ctx = createAppSandbox({ window: { client: {} } });
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
-    ctx.initDebug().then(function () {
+    return ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, false);
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initDebug should catch iparams.get errors', function (done) {
+  it('initDebug should catch iparams.get errors', function () {
     const ctx = createAppSandbox({
       window: {
         client: {
@@ -199,23 +200,21 @@ describe('logger.js', function () {
       }
     });
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
-    ctx.initDebug().then(function () {
+    return ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, false);
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initDebug should default to false when debug_enabled is falsy', function (done) {
+  it('initDebug should default to false when debug_enabled is falsy', function () {
     const ctx = createAppSandbox();
     ctx.window.client.iparams.get = function () {
       return Promise.resolve({ debug_enabled: false });
     };
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
-    ctx.initDebug().then(function () {
+    return ctx.initDebug().then(function () {
       assert.strictEqual(ctx.logger.enabled, false);
       mergeCoverage(ctx);
-      done();
     });
   });
 
@@ -248,7 +247,7 @@ describe('logger.js', function () {
 // =========================================================
 describe('i18n.js', function () {
 
-  it('initI18n should load translations', function (done) {
+  it('initI18n should load translations', function () {
     const ctx = createAppSandbox();
     ctx.XMLHttpRequest = function () {
       this.open = function () {};
@@ -258,14 +257,13 @@ describe('i18n.js', function () {
       };
     };
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
-    ctx.initI18n().then(function () {
+    return ctx.initI18n().then(function () {
       assert.strictEqual(ctx.t('btnAdd'), 'Add');
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initI18n should fallback to English when app_language is missing', function (done) {
+  it('initI18n should fallback to English when app_language is missing', function () {
     const ctx = createAppSandbox();
     ctx.window.client.iparams.get = function () {
       return Promise.resolve({ debug_enabled: false });
@@ -279,14 +277,13 @@ describe('i18n.js', function () {
       };
     };
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
-    ctx.initI18n().then(function () {
+    return ctx.initI18n().then(function () {
       assert.ok(requestedUrl.includes('English'));
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('initI18n should reject when XHR fails', function (done) {
+  it('initI18n should reject when XHR fails', function () {
     const ctx = createAppSandbox();
     ctx.XMLHttpRequest = function () {
       this.open = function () {};
@@ -295,12 +292,11 @@ describe('i18n.js', function () {
       };
     };
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
-    ctx.initI18n().then(
+    return ctx.initI18n().then(
       function () { assert.fail('Should have rejected'); },
       function (err) {
         assert.ok(err.message.includes('Failed to load i18n'));
         mergeCoverage(ctx);
-        done();
       }
     );
   });
@@ -390,6 +386,26 @@ describe('ui-renderer.js', function () {
     mergeCoverage(ctx);
   });
 
+  it('renderErrorSafe should render error via DOM API', function () {
+    const textEl = { innerHTML: 'old', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
+    const ctx = createAppSandbox();
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    ctx.renderErrorSafe(textEl, 'Safe error message');
+    assert.ok(textEl.innerHTML.includes('Safe error message'));
+    mergeCoverage(ctx);
+  });
+
+  it('renderErrorSafe should handle non-string input safely', function () {
+    const textEl = { innerHTML: 'old', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
+    const ctx = createAppSandbox();
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    ctx.renderErrorSafe(textEl, null);
+    assert.strictEqual(textEl.innerHTML, '');
+    mergeCoverage(ctx);
+  });
+
   it('formatResponse should escape HTML in response fields', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
@@ -409,36 +425,34 @@ describe('ui-renderer.js', function () {
 // =========================================================
 describe('chatgpt-service.js', function () {
 
-  it('callChatGPT should return parsed response', function (done) {
+  it('callChatGPT should return parsed response', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
     ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
-    ctx.callChatGPT('Test', 'Test body').then(function (result) {
+    return ctx.callChatGPT('Test', 'Test body').then(function (result) {
       const parsed = JSON.parse(result);
       assert.strictEqual(parsed.status.emoji, '✅');
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('callChatGPT with additionalInfo should append to prompt', function (done) {
+  it('callChatGPT with additionalInfo should append to prompt', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
     ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body', errorAdditionalInfo: 'Additional' };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
-    ctx.callChatGPT('Test', 'Test body', 'Extra info').then(function (result) {
+    return ctx.callChatGPT('Test', 'Test body', 'Extra info').then(function (result) {
       assert.ok(result);
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('callChatGPT should strip markdown code blocks', function (done) {
+  it('callChatGPT should strip markdown code blocks', function () {
     const ctx = createAppSandbox();
     ctx.window.client.request.invokeTemplate = function () {
       return Promise.resolve({
@@ -452,14 +466,13 @@ describe('chatgpt-service.js', function () {
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
     ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
-    ctx.callChatGPT('Test', 'Desc').then(function (result) {
+    return ctx.callChatGPT('Test', 'Desc').then(function (result) {
       assert.ok(!result.includes('```'));
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('callChatGPT should throw on API error', function (done) {
+  it('callChatGPT should throw on API error', function () {
     const ctx = createAppSandbox();
     ctx.window.client.request.invokeTemplate = function () {
       return Promise.reject({ status: 401, message: 'Unauthorized' });
@@ -472,12 +485,11 @@ describe('chatgpt-service.js', function () {
       errorApiKey: 'Invalid API key', errorUnknown: 'Unknown error'
     };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
-    ctx.callChatGPT('Test', 'Desc').then(
+    return ctx.callChatGPT('Test', 'Desc').then(
       function () { assert.fail('Should have thrown'); },
       function (err) {
         assert.ok(err.message);
         mergeCoverage(ctx);
-        done();
       }
     );
   });
@@ -620,7 +632,7 @@ describe('ticket-handler.js', function () {
     mergeCoverage(ctx);
   });
 
-  it('addResponseToTicket should trigger reply and notify', function (done) {
+  it('addResponseToTicket should trigger reply and notify', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
@@ -636,9 +648,8 @@ describe('ticket-handler.js', function () {
         }
       }
     };
-    ctx.addResponseToTicket().then(function () {
+    return ctx.addResponseToTicket().then(function () {
       mergeCoverage(ctx);
-      done();
     });
   });
 });
@@ -670,7 +681,7 @@ describe('modal-handler.js', function () {
     mergeCoverage(ctx);
   });
 
-  it('handleTextoAdicional should return early when no ticket data', function (done) {
+  it('handleTextoAdicional should return early when no ticket data', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
@@ -678,13 +689,12 @@ describe('modal-handler.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     ctx.console = { warn: function () {} };
     ctx.appState = { currentTicketData: null };
-    ctx.handleTextoAdicional('some text').then(function () {
+    return ctx.handleTextoAdicional('some text').then(function () {
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('handleTextoAdicional should return early when text is empty', function (done) {
+  it('handleTextoAdicional should return early when text is empty', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
@@ -692,16 +702,15 @@ describe('modal-handler.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     ctx.console = { warn: function () {} };
     ctx.appState = { currentTicketData: { subject: 'S', description: 'D' } };
-    ctx.handleTextoAdicional('   ').then(function () {
+    return ctx.handleTextoAdicional('   ').then(function () {
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('handleTextoAdicional should generate new response with additional text', function (done) {
-    const textEl = { innerHTML: '' };
+  it('handleTextoAdicional should generate new response with additional text', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
     ctx.logger.enabled = false;
     loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
@@ -720,17 +729,16 @@ describe('modal-handler.js', function () {
       lastChatGPTResponse: null
     };
 
-    ctx.handleTextoAdicional('more context').then(function () {
+    return ctx.handleTextoAdicional('more context').then(function () {
       assert.ok(textEl.innerHTML.includes('fw-button'));
       mergeCoverage(ctx);
-      done();
     });
   });
 
-  it('handleTextoAdicional should render error on failure', function (done) {
-    const textEl = { innerHTML: '' };
+  it('handleTextoAdicional should render error on failure', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.window.client.request.invokeTemplate = function () {
       return Promise.reject({ status: 500, message: 'Server error' });
     };
@@ -752,10 +760,9 @@ describe('modal-handler.js', function () {
       lastChatGPTResponse: null
     };
 
-    ctx.handleTextoAdicional('more context').then(function () {
+    return ctx.handleTextoAdicional('more context').then(function () {
       assert.ok(textEl.innerHTML.includes('error'));
       mergeCoverage(ctx);
-      done();
     });
   });
 });
@@ -764,12 +771,11 @@ describe('modal-handler.js', function () {
 // APP.JS TESTS
 // =========================================================
 describe('app.js', function () {
-  this.timeout(5000);
 
-  it('initializeApp should load and set up the app on success', function (done) {
-    const textEl = { innerHTML: '' };
+  it('initializeApp should load and set up the app on success', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
 
     // Load dependencies first (app.js depends on all of them)
     loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
@@ -794,17 +800,19 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
     // Give promises time to resolve (initializeApp is async)
-    setTimeout(function () {
-      assert.ok(ctx.appState.client);
-      mergeCoverage(ctx);
-      done();
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        assert.ok(ctx.appState.client);
+        mergeCoverage(ctx);
+        resolve();
+      }, 200);
+    });
   });
 
-  it('initializeApp catch should render error when app.initialized fails', function (done) {
-    const textEl = { innerHTML: '' };
+  it('initializeApp catch should render error when app.initialized fails', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.app = {
       initialized: function () {
         return Promise.reject(new Error('Init failed'));
@@ -820,17 +828,19 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      assert.ok(textEl.innerHTML.includes('Init failed'));
-      mergeCoverage(ctx);
-      done();
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        assert.ok(textEl.innerHTML.includes('Init failed'));
+        mergeCoverage(ctx);
+        resolve();
+      }, 200);
+    });
   });
 
-  it('initializeApp catch should handle string errors', function (done) {
-    const textEl = { innerHTML: '' };
+  it('initializeApp catch should handle string errors', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.app = {
       initialized: function () {
         return Promise.reject('string error');
@@ -846,17 +856,19 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      assert.ok(textEl.innerHTML.includes('string error'));
-      mergeCoverage(ctx);
-      done();
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        assert.ok(textEl.innerHTML.includes('string error'));
+        mergeCoverage(ctx);
+        resolve();
+      }, 200);
+    });
   });
 
-  it('initializeApp catch should handle object errors via JSON.stringify', function (done) {
-    const textEl = { innerHTML: '' };
+  it('initializeApp catch should handle object errors via JSON.stringify', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.app = {
       initialized: function () {
         return Promise.reject({ code: 42 });
@@ -872,16 +884,18 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      assert.ok(textEl.innerHTML.includes('42'));
-      mergeCoverage(ctx);
-      done();
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        assert.ok(textEl.innerHTML.includes('42'));
+        mergeCoverage(ctx);
+        resolve();
+      }, 200);
+    });
   });
 
-  it('initializeApp catch should handle null textElement', function (done) {
+  it('initializeApp catch should handle null textElement', function () {
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return null; } };
+    ctx.document = { getElementById: function () { return null; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.app = {
       initialized: function () {
         return Promise.reject(new Error('Init failed'));
@@ -897,15 +911,17 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      // No crash even if textElement is null
-      mergeCoverage(ctx);
-      done();
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        // No crash even if textElement is null
+        mergeCoverage(ctx);
+        resolve();
+      }, 200);
+    });
   });
 
-  it('renderText should handle object error without message property', function (done) {
-    const textEl = { innerHTML: '' };
+  it('renderText should handle object error without message property', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const failingClient = {
       iparams: { get: function () { return Promise.resolve({ app_language: 'English', debug_enabled: false }); } },
       request: { invokeTemplate: function () { return Promise.resolve({ response: '{}' }); } },
@@ -915,7 +931,7 @@ describe('app.js', function () {
       events: { on: function () {} }
     };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.console = { error: function () {}, log: function () {}, warn: function () {} };
     ctx.fetch = function () {
       return Promise.resolve({
@@ -935,21 +951,23 @@ describe('app.js', function () {
     ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null };
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      ctx.appState.client = failingClient;
-      ctx.renderText();
+    return new Promise(function (resolve) {
       setTimeout(function () {
-        assert.ok(textEl.innerHTML.includes('NETWORK'));
-        mergeCoverage(ctx);
-        done();
+        ctx.appState.client = failingClient;
+        ctx.renderText();
+        setTimeout(function () {
+          assert.ok(textEl.innerHTML.includes('NETWORK'));
+          mergeCoverage(ctx);
+          resolve();
+        }, 500);
       }, 500);
-    }, 500);
+    });
   });
 
-  it('renderText should show response on success', function (done) {
-    const textEl = { innerHTML: '' };
+  it('renderText should show response on success', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.fetch = function () {
       return Promise.resolve({
         json: function () {
@@ -977,18 +995,20 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
     // Wait for initializeApp() promises + then call renderText
-    setTimeout(function () {
-      ctx.renderText().then(function () {
-        assert.ok(textEl.innerHTML.includes('fw-button'));
-        assert.ok(ctx.appState.lastChatGPTResponse);
-        mergeCoverage(ctx);
-        done();
-      });
-    }, 200);
+    return new Promise(function (resolve) {
+      setTimeout(function () {
+        ctx.renderText().then(function () {
+          assert.ok(textEl.innerHTML.includes('fw-button'));
+          assert.ok(ctx.appState.lastChatGPTResponse);
+          mergeCoverage(ctx);
+          resolve();
+        });
+      }, 200);
+    });
   });
 
-  it('renderText should render error when ticket data fetch fails', function (done) {
-    const textEl = { innerHTML: '' };
+  it('renderText should render error when ticket data fetch fails', function () {
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const failingClient = {
       iparams: { get: function () { return Promise.resolve({ app_language: 'English', debug_enabled: false }); } },
       request: { invokeTemplate: function () { return Promise.resolve({ response: '{}' }); } },
@@ -998,7 +1018,7 @@ describe('app.js', function () {
       events: { on: function () {} }
     };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.console = { error: function () {}, log: function () {}, warn: function () {} };
     ctx.fetch = function () {
       return Promise.resolve({
@@ -1026,19 +1046,21 @@ describe('app.js', function () {
 
     // initializeApp runs, sets appState.client = failingClient.
     // Then we call renderText which will fail on data.get
-    setTimeout(function () {
-      // Ensure appState.client points to failingClient
-      ctx.appState.client = failingClient;
-      ctx.renderText();
+    return new Promise(function (resolve) {
       setTimeout(function () {
-        assert.ok(textEl.innerHTML.includes('Ticket fetch failed'), 'Expected error message in innerHTML, got: ' + textEl.innerHTML);
-        mergeCoverage(ctx);
-        done();
+        // Ensure appState.client points to failingClient
+        ctx.appState.client = failingClient;
+        ctx.renderText();
+        setTimeout(function () {
+          assert.ok(textEl.innerHTML.includes('Ticket fetch failed'), 'Expected error message in innerHTML, got: ' + textEl.innerHTML);
+          mergeCoverage(ctx);
+          resolve();
+        }, 500);
       }, 500);
-    }, 500);
+    });
   });
 
-  it('renderText should render error when ChatGPT call fails', function (done) {
+  it('renderText should render error when ChatGPT call fails', function () {
     const failingClient = {
       iparams: { get: function () { return Promise.resolve({ app_language: 'English', system_prompt: 'test', debug_enabled: false }); } },
       request: { invokeTemplate: function () { return Promise.reject({ status: 500, message: 'API down' }); } },
@@ -1047,9 +1069,9 @@ describe('app.js', function () {
       instance: { receive: function () {} },
       events: { on: function () {} }
     };
-    const textEl = { innerHTML: '' };
+    const textEl = { innerHTML: '', textContent: '', appendChild: function(child) { this.innerHTML = child.textContent || ''; } };
     const ctx = createAppSandbox();
-    ctx.document = { getElementById: function () { return textEl; } };
+    ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.console = { error: function () {}, log: function () {}, warn: function () {} };
     ctx.fetch = function () {
       return Promise.resolve({
@@ -1077,14 +1099,16 @@ describe('app.js', function () {
     ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null };
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
-    setTimeout(function () {
-      ctx.appState.client = failingClient;
-      ctx.renderText();
+    return new Promise(function (resolve) {
       setTimeout(function () {
-        assert.ok(textEl.innerHTML.includes('error'), 'Expected error in innerHTML, got: ' + textEl.innerHTML);
-        mergeCoverage(ctx);
-        done();
+        ctx.appState.client = failingClient;
+        ctx.renderText();
+        setTimeout(function () {
+          assert.ok(textEl.innerHTML.includes('error'), 'Expected error in innerHTML, got: ' + textEl.innerHTML);
+          mergeCoverage(ctx);
+          resolve();
+        }, 500);
       }, 500);
-    }, 500);
+    });
   });
 });

@@ -65,3 +65,18 @@ function renderError(message) {
   return `<fw-inline-message open type="error">${escapeHtml(message)}</fw-inline-message>`;
 }
 
+/**
+ * Renderizar error directamente en un elemento DOM de forma segura (sin innerHTML)
+ * Usa DOM API para evitar DOM XSS con datos de excepciones
+ * @param {HTMLElement} element - Elemento DOM donde renderizar
+ * @param {string} message - Mensaje de error a mostrar
+ */
+function renderErrorSafe(element, message) {
+  element.textContent = '';
+  const errorEl = document.createElement('fw-inline-message');
+  errorEl.setAttribute('open', '');
+  errorEl.setAttribute('type', 'error');
+  errorEl.textContent = typeof message === 'string' ? message : '';
+  element.appendChild(errorEl);
+}
+

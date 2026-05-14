@@ -68,8 +68,8 @@ const SERVER_MESSAGES = {
 };
 
 exports = {
-  onAppInstallHandler: function () {
-    const lang = $iparams.app_language || 'English';
+  onAppInstallHandler: function (args) {
+    const lang = args.iparams.app_language || 'English';
     const msgs = SERVER_MESSAGES[lang] || SERVER_MESSAGES.English;
 
     $request.invokeTemplate('openaiValidateKey', {}).then(

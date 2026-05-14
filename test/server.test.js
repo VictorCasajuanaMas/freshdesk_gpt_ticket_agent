@@ -60,135 +60,153 @@ function mergeCoverage(sandbox) {
 // =========================================================
 describe('server.js - onAppInstallHandler', function () {
 
-  it('should call renderData() on successful validation (English)', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.resolve({}); }
-    );
-    ctx.renderData = function (err) {
-      assert.strictEqual(err, undefined);
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should call renderData() on successful validation (English)', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.resolve({}); }
+      );
+      ctx.renderData = function (err) {
+        assert.strictEqual(err, undefined);
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should call renderData() on successful validation (Español)', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'Español' },
-      function () { return Promise.resolve({}); }
-    );
-    ctx.renderData = function (err) {
-      assert.strictEqual(err, undefined);
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should call renderData() on successful validation (Español)', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'Español' },
+        function () { return Promise.resolve({}); }
+      );
+      ctx.renderData = function (err) {
+        assert.strictEqual(err, undefined);
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'Español' } });
+    });
   });
 
-  it('should return 401 error message', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.reject({ status: 401 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('not valid'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should return 401 error message', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.reject({ status: 401 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('not valid'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should return 429 error message', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.reject({ status: 429 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('usage limit'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should return 429 error message', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.reject({ status: 429 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('usage limit'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should return 500 error message for server errors', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.reject({ status: 500 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('not available'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should return 500 error message for server errors', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.reject({ status: 500 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('not available'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should use 500 message for 503 status', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.reject({ status: 503 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('not available'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should use 500 message for 503 status', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.reject({ status: 503 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('not available'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should use default message for unknown error status', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'English' },
-      function () { return Promise.reject({ status: 403 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('not valid'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should use default message for unknown error status', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'English' },
+        function () { return Promise.reject({ status: 403 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('not valid'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'English' } });
+    });
   });
 
-  it('should fall back to English when language is unknown', function (done) {
-    const ctx = createServerSandbox(
-      { app_language: 'UnknownLanguage' },
-      function () { return Promise.reject({ status: 401 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      assert.ok(err.message.includes('not valid'));
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should fall back to English when language is unknown', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        { app_language: 'UnknownLanguage' },
+        function () { return Promise.reject({ status: 401 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        assert.ok(err.message.includes('not valid'));
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: { app_language: 'UnknownLanguage' } });
+    });
   });
 
-  it('should fall back to English when app_language is undefined', function (done) {
-    const ctx = createServerSandbox(
-      {},
-      function () { return Promise.reject({ status: 401 }); }
-    );
-    ctx.renderData = function (err) {
-      assert.ok(err);
-      mergeCoverage(ctx);
-      done();
-    };
-    loadInstrumented('server/server.js', ctx);
-    ctx.exports.onAppInstallHandler();
+  it('should fall back to English when app_language is undefined', function () {
+    return new Promise(function (resolve) {
+      const ctx = createServerSandbox(
+        {},
+        function () { return Promise.reject({ status: 401 }); }
+      );
+      ctx.renderData = function (err) {
+        assert.ok(err);
+        mergeCoverage(ctx);
+        resolve();
+      };
+      loadInstrumented('server/server.js', ctx);
+      ctx.exports.onAppInstallHandler({ iparams: {} });
+    });
   });
 });

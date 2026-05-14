@@ -48,7 +48,7 @@ function initializeApp() {
     console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
-      textElement.innerHTML = renderError(errorMsg);
+      renderErrorSafe(textElement, errorMsg);
     }
   });
 }
@@ -92,6 +92,6 @@ async function renderText() {
     const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
     LogWrite('Error en renderText: ' + errorMsg);
     console.error('Error en renderText:', error);
-    textElement.innerHTML = renderError(errorMsg);
+    renderErrorSafe(textElement, errorMsg);
   }
 }

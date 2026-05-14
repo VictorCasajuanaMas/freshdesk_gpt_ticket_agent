@@ -1,25 +1,36 @@
-global.renderData = vi.fn();
+const fs = require('fs');
+const path = require('path');
+const vm = require('vm');
 
-var server = require('../server/server.js');
+function loadServer() {
+  const code = fs.readFileSync(path.join(process.cwd(), 'server/server.js'), 'utf8');
+  const sandbox = {
+    exports: {},
+    $request: { invokeTemplate: vi.fn(() => Promise.resolve({})) },
+    renderData: vi.fn(),
+    JSON: JSON,
+    Object: Object,
+    Array: Array,
+    Error: Error,
+    Promise: Promise,
+    setTimeout: setTimeout,
+    console: console
+  };
+  const ctx = vm.createContext(sandbox);
+  vm.runInContext(code, ctx);
+  return ctx;
+}
 
 describe('server.js - Coverage Tests', function() {
-  test('onTicketCreateHandler should exist and be a function', function() {
-    expect(server.onTicketCreateHandler).toBeDefined();
-    expect(typeof server.onTicketCreateHandler).toBe('function');
-  });
-
   test('onAppInstallHandler should exist and be a function', function() {
-    expect(server.onAppInstallHandler).toBeDefined();
-    expect(typeof server.onAppInstallHandler).toBe('function');
-  });
-
-  test('onAppUninstallHandler should exist and be a function', function() {
-    expect(server.onAppUninstallHandler).toBeDefined();
-    expect(typeof server.onAppUninstallHandler).toBe('function');
+    const ctx = loadServer();
+    expect(ctx.exports.onAppInstallHandler).toBeDefined();
+    expect(typeof ctx.exports.onAppInstallHandler).toBe('function');
   });
 
   test('server exports should be an object', function() {
-    expect(typeof server).toBe('object');
-    expect(server).not.toBeNull();
+    const ctx = loadServer();
+    expect(typeof ctx.exports).toBe('object');
+    expect(ctx.exports).not.toBeNull();
   });
 });

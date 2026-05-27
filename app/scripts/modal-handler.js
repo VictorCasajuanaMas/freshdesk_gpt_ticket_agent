@@ -24,7 +24,6 @@ async function handleTextoAdicional(textoAdicional) {
   
   if (!appState.currentTicketData || !textoAdicional.trim()) {
     LogWrite('Error: No hay datos del ticket o texto adicional vacío');
-    console.warn('No hay datos del ticket o texto adicional vacío');
     return;
   }
   
@@ -34,18 +33,18 @@ async function handleTextoAdicional(textoAdicional) {
     textElement.innerHTML = renderLoadingSpinner(t('loadingNewResponse'));
     
     const { subject, description } = appState.currentTicketData;
-    const response = await callChatGPT(subject, description, textoAdicional);
+    const result = await callChatGPT(subject, description, textoAdicional);
     
     LogWrite('Nueva respuesta con información adicional generada');
     
     // Actualizar estado global
-    appState.lastChatGPTResponse = response;
-    const formattedResponse = formatResponse(response);
+    appState.lastChatGPTResponse = result.content;
+    appState.lastAnnotations = result.annotations;
+    const formattedResponse = formatResponse(result.content, result.annotations);
     
     textElement.innerHTML = renderUI(formattedResponse);
   } catch (error) {
     LogWrite('Error al generar respuesta adicional: ' + error.message);
-    console.error('Error en handleTextoAdicional:', error);
     renderErrorSafe(textElement, error.message);
   }
 }

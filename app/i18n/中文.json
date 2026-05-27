@@ -18,5 +18,6 @@
   "errorUnknown": "连接OpenAI时发生未知错误。",
   "errorAdditionalInfo": "附加信息",
   "promptSubject": "主题",
-  "promptBody": "正文"
+  "promptBody": "正文",
+  "sourcesTitle": "来源"
 }

@@ -18,5 +18,6 @@
   "errorUnknown": "Errore sconosciuto durante la connessione a OpenAI.",
   "errorAdditionalInfo": "INFORMAZIONI AGGIUNTIVE",
   "promptSubject": "Oggetto",
-  "promptBody": "Corpo"
+  "promptBody": "Corpo",
+  "sourcesTitle": "Fonti"
 }

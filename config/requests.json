@@ -11,6 +11,18 @@
       }
     }
   },
+  "openaiResponses": {
+    "schema": {
+      "method": "POST",
+      "protocol": "https",
+      "host": "api.openai.com",
+      "path": "/v1/responses",
+      "headers": {
+        "Content-Type": "application/json",
+        "Authorization": "Bearer <%= iparam.openai_api_key %>"
+      }
+    }
+  },
   "openaiValidateKey": {
     "schema": {
       "method": "GET",

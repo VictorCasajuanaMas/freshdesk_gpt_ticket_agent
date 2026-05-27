@@ -18,5 +18,6 @@
   "errorUnknown": "OpenAIへの接続中に不明なエラーが発生しました。",
   "errorAdditionalInfo": "追加情報",
   "promptSubject": "件名",
-  "promptBody": "本文"
+  "promptBody": "本文",
+  "sourcesTitle": "参照元"
 }

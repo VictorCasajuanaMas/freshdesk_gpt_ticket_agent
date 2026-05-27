@@ -23,22 +23,29 @@
     };
     
     const init = async () => {
-      client = await app.initialized();
-      
-      const iparams = await client.iparams.get();
-      const language = iparams.app_language || 'Spanish';
-      const resp = await fetch(`i18n/${language}.json`);
-      strings = await resp.json();
-      
-      document.getElementById('textoAdicional').setAttribute('placeholder', strings.modalPlaceholder || '');
-      document.getElementById('btnAccept').textContent = strings.btnAccept || 'Accept';
-      document.getElementById('btnCancel').textContent = strings.btnCancel || 'Cancel';
-      
-      document.querySelector('form').addEventListener('submit', handleSubmit);
-      document.getElementById('textoAdicional').addEventListener('fwInput', () => {
-        const alert = document.getElementById('emptyAlert');
-        if (alert) { alert.remove(); }
-      });
+      try {
+        client = await app.initialized();
+        
+        const iparams = await client.iparams.get();
+        const language = iparams.app_language || 'Spanish';
+        const resp = await fetch(`i18n/${language}.json`);
+        strings = await resp.json();
+        
+        document.getElementById('textoAdicional').setAttribute('placeholder', strings.modalPlaceholder || '');
+        document.getElementById('btnAccept').textContent = strings.btnAccept || 'Accept';
+        document.getElementById('btnCancel').textContent = strings.btnCancel || 'Cancel';
+        
+        document.querySelector('form').addEventListener('submit', handleSubmit);
+        document.getElementById('textoAdicional').addEventListener('fwInput', () => {
+          const alert = document.getElementById('emptyAlert');
+          if (alert) { alert.remove(); }
+        });
+      } catch (error) {
+        const alertContainer = document.getElementById('alertContainer');
+        if (alertContainer) {
+          alertContainer.innerHTML = `<fw-inline-message open type="error">${escapeHtml(error.message || 'Initialization error')}</fw-inline-message>`;
+        }
+      }
     };
 
     const handleSubmit = async (event) => {
@@ -55,13 +62,20 @@
         return;
       }
 
-      await client.instance.send({
-        message: {
-          textoAdicional: textoValue
+      try {
+        await client.instance.send({
+          message: {
+            textoAdicional: textoValue
+          }
+        });
+        
+        client.instance.close();
+      } catch (error) {
+        const alertContainer = document.getElementById('alertContainer');
+        if (alertContainer) {
+          alertContainer.innerHTML = `<fw-inline-message open type="error">${escapeHtml(error.message || 'Error')}</fw-inline-message>`;
         }
-      });
-      
-      client.instance.close();
+      }
     };
     
     init();

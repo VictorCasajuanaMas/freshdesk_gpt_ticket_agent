@@ -10,7 +10,7 @@
  */
 function extractResponseText(response) {
   const parsedResponse = JSON.parse(response);
-  return parsedResponse.response;
+  return parsedResponse.response.replace(/\n/g, '<br>');
 }
 
 /**
@@ -25,11 +25,10 @@ async function addResponseToTicket() {
   await appState.client.interface.trigger("click", {
     id: "reply",
     text: responseText
-  }).then(function() {
-    LogWrite('Respuesta insertada exitosamente en ticket');
-    appState.client.interface.trigger("showNotify", {
-      type: "success",
-      message: t('notifyResponseInserted')
-    });
+  });
+  LogWrite('Respuesta insertada exitosamente en ticket');
+  appState.client.interface.trigger("showNotify", {
+    type: "success",
+    message: t('notifyResponseInserted')
   });
 }

@@ -8,16 +8,17 @@ const i18n = { strings: {} };
 
 /**
  * Inicializar las traducciones cargando el JSON del idioma configurado
+ * Nota: Se usa XMLHttpRequest para cargar ficheros locales (no es una API externa).
  */
 async function initI18n() {
   const iparams = await window.client.iparams.get();
   const language = iparams.app_language || 'English';
 
-  i18n.strings = await new Promise((resolve, reject) => {
-    const xhr = new XMLHttpRequest();
-    xhr.open('GET', `i18n/${language}.json`);
-    xhr.onload = () => resolve(JSON.parse(xhr.responseText));
-    xhr.onerror = () => reject(new Error('Failed to load i18n'));
+  i18n.strings = await new Promise(function(resolve, reject) {
+    const xhr = new XMLHttpRequest(); // Local file load, not an API request
+    xhr.open('GET', 'i18n/' + language + '.json');
+    xhr.onload = function() { resolve(JSON.parse(xhr.responseText)); };
+    xhr.onerror = function() { reject(new Error('Failed to load i18n')); };
     xhr.send();
   });
 }

@@ -16,16 +16,39 @@ function escapeHtml(str) {
 /**
  * Formatear respuesta de ChatGPT para mostrar en la UI
  * @param {string} response - Respuesta raw de ChatGPT
+ * @param {Array|null} annotations - Anotaciones de citas de ficheros (vector store)
  * @returns {string} - HTML formateado para mostrar
  */
-function formatResponse(response) {
+function formatResponse(response, annotations) {
   const parsedResponse = JSON.parse(response);
   const emoji = escapeHtml(parsedResponse.status.emoji);
   const status = escapeHtml(parsedResponse.status.status);
   const responseText = escapeHtml(parsedResponse.response).replace(/\n/g, '<br>');
-  return `
+  let html = `
     <p>${emoji} ${status}</p>
     <div>${responseText}</div>
+  `;
+  if (annotations && annotations.length) {
+    html += renderSources(annotations);
+  }
+  return html;
+}
+
+/**
+ * Renderizar sección de fuentes de ficheros del vector store
+ * @param {Array} annotations - Array de {filename, fileId}
+ * @returns {string} - HTML con la lista de fuentes
+ */
+function renderSources(annotations) {
+  let items = '';
+  for (let i = 0; i < annotations.length; i++) {
+    items += '<li>' + escapeHtml(annotations[i].filename) + '</li>';
+  }
+  return `
+    <div style="margin-top: 12px; padding: 8px; background: var(--fw-popover-bg, #f5f7f9); border-radius: 4px;">
+      <strong>${t('sourcesTitle')}</strong>
+      <ul style="margin: 4px 0 0 0; padding-left: 20px;">${items}</ul>
+    </div>
   `;
 }
 

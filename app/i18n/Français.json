@@ -18,5 +18,6 @@
   "errorUnknown": "Erreur inconnue lors de la connexion à OpenAI.",
   "errorAdditionalInfo": "INFORMATIONS SUPPLÉMENTAIRES",
   "promptSubject": "Sujet",
-  "promptBody": "Corps"
+  "promptBody": "Corps",
+  "sourcesTitle": "Sources"
 }

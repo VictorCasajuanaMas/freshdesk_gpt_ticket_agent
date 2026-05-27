@@ -18,5 +18,6 @@
   "errorUnknown": "Onbekende fout bij het verbinden met OpenAI.",
   "errorAdditionalInfo": "AANVULLENDE INFORMATIE",
   "promptSubject": "Onderwerp",
-  "promptBody": "Inhoud"
+  "promptBody": "Inhoud",
+  "sourcesTitle": "Bronnen"
 }

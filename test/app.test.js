@@ -127,6 +127,13 @@ function createAppSandbox(overrides) {
       return Promise.resolve({
         json: function () { return Promise.resolve({}); }
       });
+    },
+    XMLHttpRequest: function () {
+      this.open = function () {};
+      this.send = function () {
+        this.responseText = '{}';
+        this.onload();
+      };
     }
   };
 
@@ -142,8 +149,8 @@ function createAppSandbox(overrides) {
 // Load all frontend scripts in dependency order into a sandbox
 var LOGGER_VARS = ['logger', 'initDebug', 'LogWrite'];
 var I18N_VARS = ['i18n', 'initI18n', 't'];
-var CHATGPT_VARS = ['callChatGPT', 'OPENAI_ERROR_KEYS', 'extractOpenAIMessage', 'parseOpenAIError'];
-var UIRENDERER_VARS = ['escapeHtml', 'formatResponse', 'renderUI', 'renderLoadingSpinner', 'renderError', 'renderErrorSafe'];
+var CHATGPT_VARS = ['callChatGPT', 'callStandard', 'callWithVectorStore', 'parseResponsesApiOutput', 'extractAnnotations', 'OPENAI_ERROR_KEYS', 'extractOpenAIMessage', 'parseOpenAIError'];
+var UIRENDERER_VARS = ['escapeHtml', 'formatResponse', 'renderSources', 'renderUI', 'renderLoadingSpinner', 'renderError', 'renderErrorSafe'];
 var TICKET_VARS = ['extractResponseText', 'addResponseToTicket'];
 var MODAL_VARS = ['showOtraModal', 'handleTextoAdicional'];
 var APP_VARS = ['appState', 'initializeApp', 'renderText'];
@@ -320,7 +327,7 @@ describe('ui-renderer.js', function () {
     ctx.i18n.strings = { btnAdd: 'Add', btnOther: 'Other', btnAddTitle: 'Add', btnOtherTitle: 'Other' };
     loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
     const json = JSON.stringify({ status: { emoji: '✅', status: 'OK' }, response: 'Hello' });
-    const result = ctx.formatResponse(json);
+    const result = ctx.formatResponse(json, null);
     assert.ok(result.includes('✅'));
     assert.ok(result.includes('Hello'));
     mergeCoverage(ctx);
@@ -412,7 +419,7 @@ describe('ui-renderer.js', function () {
     ctx.i18n.strings = { btnAdd: 'Add', btnOther: 'Other', btnAddTitle: 'Add', btnOtherTitle: 'Other' };
     loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
     const json = JSON.stringify({ status: { emoji: '✅', status: '<b>bold</b>' }, response: 'line1\nline2' });
-    const result = ctx.formatResponse(json);
+    const result = ctx.formatResponse(json, null);
     assert.ok(result.includes('&lt;b&gt;'));
     assert.ok(result.includes('<br>'));
     assert.ok(!result.includes('<b>bold</b>'));
@@ -433,8 +440,9 @@ describe('chatgpt-service.js', function () {
     ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
     return ctx.callChatGPT('Test', 'Test body').then(function (result) {
-      const parsed = JSON.parse(result);
+      const parsed = JSON.parse(result.content);
       assert.strictEqual(parsed.status.emoji, '✅');
+      assert.strictEqual(result.annotations, null);
       mergeCoverage(ctx);
     });
   });
@@ -467,7 +475,7 @@ describe('chatgpt-service.js', function () {
     ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
     loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
     return ctx.callChatGPT('Test', 'Desc').then(function (result) {
-      assert.ok(!result.includes('```'));
+      assert.ok(!result.content.includes('```'));
       mergeCoverage(ctx);
     });
   });
@@ -616,6 +624,136 @@ describe('chatgpt-service.js', function () {
     assert.strictEqual(result, 'Fallback');
     mergeCoverage(ctx);
   });
+
+  it('callChatGPT should use Responses API when vector_store_id is set', function () {
+    const ctx = createAppSandbox();
+    ctx.window.client.iparams.get = function () {
+      return Promise.resolve({
+        app_language: 'English',
+        system_prompt: 'You are helpful',
+        debug_enabled: false,
+        vector_store_id: 'vs_test123'
+      });
+    };
+    ctx.window.client.request.invokeTemplate = function (templateName, opts) {
+      assert.strictEqual(templateName, 'openaiResponses');
+      const body = JSON.parse(opts.body);
+      assert.strictEqual(body.model, 'gpt-4o-mini');
+      assert.strictEqual(body.tools[0].type, 'file_search');
+      assert.strictEqual(body.tools[0].vector_store_ids[0], 'vs_test123');
+      return Promise.resolve({
+        response: JSON.stringify({
+          output: [
+            { type: 'file_search_call', id: 'fs_1', status: 'completed', queries: ['test'] },
+            {
+              type: 'message', role: 'assistant',
+              content: [{
+                type: 'output_text',
+                text: '{"status":{"emoji":"✅","status":"OK"},"response":"Answer from docs"}',
+                annotations: [
+                  { type: 'file_citation', index: 10, file_id: 'file-1', filename: 'guide.pdf' },
+                  { type: 'file_citation', index: 20, file_id: 'file-1', filename: 'guide.pdf' }
+                ]
+              }]
+            }
+          ]
+        })
+      });
+    };
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.logger.enabled = false;
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    return ctx.callChatGPT('Test', 'Desc').then(function (result) {
+      assert.ok(result.content.includes('Answer from docs'));
+      assert.strictEqual(result.annotations.length, 1);
+      assert.strictEqual(result.annotations[0].filename, 'guide.pdf');
+      mergeCoverage(ctx);
+    });
+  });
+
+  it('callChatGPT should use Chat Completions API when vector_store_id is empty', function () {
+    const ctx = createAppSandbox();
+    ctx.window.client.iparams.get = function () {
+      return Promise.resolve({
+        app_language: 'English',
+        system_prompt: 'You are helpful',
+        debug_enabled: false,
+        vector_store_id: ''
+      });
+    };
+    let usedTemplate;
+    ctx.window.client.request.invokeTemplate = function (templateName) {
+      usedTemplate = templateName;
+      return Promise.resolve({
+        response: JSON.stringify({
+          choices: [{ message: { content: '{"status":{"emoji":"✅","status":"OK"},"response":"Test"}' } }]
+        })
+      });
+    };
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    ctx.logger.enabled = false;
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { promptSubject: 'Subject', promptBody: 'Body' };
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    return ctx.callChatGPT('Test', 'Desc').then(function (result) {
+      assert.strictEqual(usedTemplate, 'openaiChatCompletion');
+      assert.strictEqual(result.annotations, null);
+      mergeCoverage(ctx);
+    });
+  });
+
+  it('parseResponsesApiOutput should throw when no message item', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { errorUnknown: 'Unknown error' };
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    assert.throws(function () {
+      ctx.parseResponsesApiOutput({ output: [{ type: 'file_search_call' }] });
+    }, /Unknown error/);
+    mergeCoverage(ctx);
+  });
+
+  it('parseResponsesApiOutput should return null annotations when none present', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/logger.js', ctx, LOGGER_VARS);
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    loadInstrumented('app/scripts/chatgpt-service.js', ctx, CHATGPT_VARS);
+    const result = ctx.parseResponsesApiOutput({
+      output: [{
+        type: 'message', role: 'assistant',
+        content: [{ type: 'output_text', text: '{"status":{"emoji":"✅","status":"OK"},"response":"Hi"}', annotations: [] }]
+      }]
+    });
+    assert.strictEqual(result.annotations, null);
+    mergeCoverage(ctx);
+  });
+
+  it('formatResponse should render sources when annotations provided', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { sourcesTitle: 'Sources' };
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    const json = JSON.stringify({ status: { emoji: '✅', status: 'OK' }, response: 'Hello' });
+    const annotations = [{ filename: 'doc.pdf', fileId: 'file-1' }];
+    const result = ctx.formatResponse(json, annotations);
+    assert.ok(result.includes('Sources'));
+    assert.ok(result.includes('doc.pdf'));
+    mergeCoverage(ctx);
+  });
+
+  it('renderSources should escape filenames', function () {
+    const ctx = createAppSandbox();
+    loadInstrumented('app/scripts/i18n.js', ctx, I18N_VARS);
+    ctx.i18n.strings = { sourcesTitle: 'Sources' };
+    loadInstrumented('app/scripts/ui-renderer.js', ctx, UIRENDERER_VARS);
+    const result = ctx.renderSources([{ filename: '<script>xss</script>', fileId: 'f1' }]);
+    assert.ok(result.includes('&lt;script&gt;'));
+    assert.ok(!result.includes('<script>xss'));
+    mergeCoverage(ctx);
+  });
 });
 
 // =========================================================
@@ -623,12 +761,12 @@ describe('chatgpt-service.js', function () {
 // =========================================================
 describe('ticket-handler.js', function () {
 
-  it('extractResponseText should return response field', function () {
+  it('extractResponseText should return response field with line breaks as br tags', function () {
     const ctx = createAppSandbox();
     loadInstrumented('app/scripts/ticket-handler.js', ctx, TICKET_VARS);
 
-    const json = JSON.stringify({ response: 'Hello customer' });
-    assert.strictEqual(ctx.extractResponseText(json), 'Hello customer');
+    const json = JSON.stringify({ response: 'Hello\ncustomer' });
+    assert.strictEqual(ctx.extractResponseText(json), 'Hello<br>customer');
     mergeCoverage(ctx);
   });
 
@@ -989,7 +1127,7 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
 
     // Don't load app.js (it auto-calls initializeApp). Set up appState manually.
-    ctx.appState = { client: ctx.window.client, currentTicketData: null, lastChatGPTResponse: null };
+    ctx.appState = { client: ctx.window.client, currentTicketData: null, lastChatGPTResponse: null, lastAnnotations: null };
 
     // Load app.js (calls initializeApp() on load)
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
@@ -1039,7 +1177,7 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
 
     // Set up appState manually (don't load app.js which auto-calls initializeApp)
-    ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null };
+    ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null, lastAnnotations: null };
 
     // Load app.js to get instrumented renderText, then call it after init completes
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
@@ -1073,16 +1211,17 @@ describe('app.js', function () {
     const ctx = createAppSandbox();
     ctx.document = { getElementById: function () { return textEl; }, createElement: function () { return { textContent: '', setAttribute: function () {} }; } };
     ctx.console = { error: function () {}, log: function () {}, warn: function () {} };
-    ctx.fetch = function () {
-      return Promise.resolve({
-        json: function () {
-          return Promise.resolve({
-            loading: 'Loading...', errorServer500: 'Server down',
-            promptSubject: 'Subject', promptBody: 'Body',
-            errorUnknown: 'Unknown'
-          });
-        }
-      });
+    const i18nData = {
+      loading: 'Loading...', errorServer500: 'Server down',
+      promptSubject: 'Subject', promptBody: 'Body',
+      errorUnknown: 'Unknown'
+    };
+    ctx.XMLHttpRequest = function () {
+      this.open = function () {};
+      this.send = function () {
+        this.responseText = JSON.stringify(i18nData);
+        this.onload();
+      };
     };
     ctx.app = {
       initialized: function () { return Promise.resolve(failingClient); }
@@ -1096,7 +1235,7 @@ describe('app.js', function () {
     loadInstrumented('app/scripts/ticket-handler.js', ctx, TICKET_VARS);
     loadInstrumented('app/scripts/modal-handler.js', ctx, MODAL_VARS);
 
-    ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null };
+    ctx.appState = { client: failingClient, currentTicketData: null, lastChatGPTResponse: null, lastAnnotations: null };
     loadInstrumented('app/scripts/app.js', ctx, APP_VARS);
 
     return new Promise(function (resolve) {
@@ -1104,7 +1243,7 @@ describe('app.js', function () {
         ctx.appState.client = failingClient;
         ctx.renderText();
         setTimeout(function () {
-          assert.ok(textEl.innerHTML.includes('error'), 'Expected error in innerHTML, got: ' + textEl.innerHTML);
+          assert.ok(textEl.innerHTML.includes('Server down'), 'Expected error in innerHTML, got: ' + textEl.innerHTML);
           mergeCoverage(ctx);
           resolve();
         }, 500);

@@ -18,5 +18,6 @@
   "errorUnknown": "Okänt fel vid anslutning till OpenAI.",
   "errorAdditionalInfo": "YTTERLIGARE INFORMATION",
   "promptSubject": "Ämne",
-  "promptBody": "Innehåll"
+  "promptBody": "Innehåll",
+  "sourcesTitle": "Källor"
 }

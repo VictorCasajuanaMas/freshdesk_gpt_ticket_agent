@@ -18,5 +18,6 @@
   "errorUnknown": "Unknown error contacting OpenAI.",
   "errorAdditionalInfo": "ADDITIONAL INFORMATION",
   "promptSubject": "Subject",
-  "promptBody": "Body"
+  "promptBody": "Body",
+  "sourcesTitle": "Sources"
 }

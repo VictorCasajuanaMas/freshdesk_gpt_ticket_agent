@@ -7,7 +7,8 @@
 const appState = {
   client: null,
   currentTicketData: null,
-  lastChatGPTResponse: null
+  lastChatGPTResponse: null,
+  lastAnnotations: null
 };
 
 
@@ -45,7 +46,6 @@ function initializeApp() {
   }).catch(function(error) {
     const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
     LogWrite('Error al inicializar aplicación: ' + errorMsg);
-    console.error('Error al inicializar la aplicación:', error);
     const textElement = document.getElementById('apptext');
     if (textElement) {
       renderErrorSafe(textElement, errorMsg);
@@ -76,22 +76,22 @@ async function renderText() {
     textElement.innerHTML = renderLoadingSpinner(t('loading'));
     
     // Generar respuesta de ChatGPT
-    const chatGPTResponse = await callChatGPT(subject, description);
+    const result = await callChatGPT(subject, description);
     
     LogWrite('Respuesta de ChatGPT recibida - renderizando UI');
     
     // Asignar al estado global
     appState.currentTicketData = ticketInfo;
-    appState.lastChatGPTResponse = chatGPTResponse;
+    appState.lastChatGPTResponse = result.content;
+    appState.lastAnnotations = result.annotations;
     
-    const formattedResponse = formatResponse(chatGPTResponse);
+    const formattedResponse = formatResponse(result.content, result.annotations);
     
     // Renderizar UI
     textElement.innerHTML = renderUI(formattedResponse);
   } catch (error) {
     const errorMsg = error.message || (typeof error === 'string' ? error : JSON.stringify(error));
     LogWrite('Error en renderText: ' + errorMsg);
-    console.error('Error en renderText:', error);
     renderErrorSafe(textElement, errorMsg);
   }
 }

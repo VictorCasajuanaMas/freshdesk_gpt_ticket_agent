@@ -18,5 +18,6 @@
   "errorUnknown": "Nieznany błąd podczas łączenia z OpenAI.",
   "errorAdditionalInfo": "DODATKOWE INFORMACJE",
   "promptSubject": "Temat",
-  "promptBody": "Treść"
+  "promptBody": "Treść",
+  "sourcesTitle": "Źródła"
 }

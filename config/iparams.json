@@ -7,6 +7,17 @@
     "required": true,
     "default_value": ""
   },
+  "vector_store_id": {
+    "display_name": "Vector Store ID",
+    "description": "Optional OpenAI Vector Store ID (starts with vs_). When set, the assistant will search your uploaded files for relevant information before generating a response.",
+    "type": "text",
+    "required": false,
+    "default_value": "",
+    "regex": {
+      "vector-store-format": "^$|^vs_[a-zA-Z0-9_]+$",
+      "vector-store-format-error": "Vector Store ID must start with vs_ followed by alphanumeric characters."
+    }
+  },
   "system_prompt": {
     "display_name": "System Prompt",
     "description": "Custom prompt that defines how ChatGPT should behave when analyzing tickets",
